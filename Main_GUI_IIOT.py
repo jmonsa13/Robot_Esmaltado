@@ -359,4 +359,3 @@ if page == "Pre-Secadero":
                 fig = sql_plot_presecadero(tipo="rango", ini=str(sel_dia_ini), day=str(sel_dia_fin), database='presecadero',
                              table="presecadero")
                 st.plotly_chart(fig, use_container_width=True)
-
