@@ -1,5 +1,5 @@
 streamlit==0.88.0
-pyodbc==4.0.31
+pyodbc==4.0.30
 pandas==1.2.5
 plotly==4.14.3
 streamlit_aggrid==0.2.1
