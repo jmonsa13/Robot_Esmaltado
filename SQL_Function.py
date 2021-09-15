@@ -132,7 +132,7 @@ def turno_time(day, turno):
 
     return ini_date, fin_date, title_plot
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=600)
 def sql_connect(tipo="day", day="2021-04-28", ini="2021-04-27", hour=6, turno=1, server='EASAB101', database='robot1',
                 table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):
     """
@@ -199,7 +199,7 @@ def sql_connect(tipo="day", day="2021-04-28", ini="2021-04-27", hour=6, turno=1,
 
     return pd_sql
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=600)
 def sql_plot(tipo="day", hour=6, turno=1, day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1"):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
@@ -234,7 +234,7 @@ def sql_plot(tipo="day", hour=6, turno=1, day="2021-04-28", ini="2021-04-27", da
     fig = plot_html(df, title, filename)
     return df, fig
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=600)
 def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", hour=6, turno=1):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
@@ -277,7 +277,7 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", hour=6, turno=1
 
     return df, df2, fig
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=600)
 def sql_plot_presecadero(tipo = "day", day = "2021-04-28", ini ="2021-04-27",  database = 'robot1', table = "robot1"):
     """
     """
