@@ -1,20 +1,43 @@
 # Python File function for streamlit tools
-# Sales Baños y Cocna
-# 03-August-2021
+# Analysis function for IIOT | Colceramica
+# 21-September-2021
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
-import numpy as np
-import pandas as pd
 import datetime
 
+import numpy as np
+import pandas as pd
 import streamlit as st
+
+from st_aggrid import AgGrid, GridOptionsBuilder
 # ----------------------------------------------------------------------------------------------------------------------
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def Round(x):
-    return np.round(x,3)
+# Function definition
+
+
+def visual_tabla_dinam(df, key):
+    # Definiendo la tabla de visualización
+    gb = GridOptionsBuilder.from_dataframe(df)
+
+    gb.configure_side_bar()
+    gridoptions = gb.build()
+
+    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True, defaultWidth=5,
+           fit_columns_on_grid_load=False, theme="streamlit",  # "light", "dark", "blue", "material"
+           key=key, reload_data=True,
+           gridOptions=gridoptions, enable_enterprise_modules=True)
+    return
+
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def DF_Analitica_Esmalte(df):
+def round_np(x):
+    """
+    Función que redondea una cifra
+    """
+    return np.round(x, 3)
+
+
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+def analitica_esmalte(df):
     """
     Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado
     """
@@ -130,7 +153,7 @@ def DF_Analitica_Esmalte(df):
 
                 # --------------------------------------------------------------------------------------------
                 # Conteo del flujo masico
-                if df.iloc[idx]['fmasico'] > 0 and flag_fmasico == True:
+                if df.iloc[idx]['fmasico'] > 0 and flag_fmasico is True:
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['fmasico'] > 0 or df.iloc[idx_fmasico + 1]['fmasico'] > 0:
@@ -150,19 +173,21 @@ def DF_Analitica_Esmalte(df):
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
                             print(
-                                "¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
+                                "¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: "
+                                "El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
                             print(
-                                "¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
+                                "¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: "
+                                "El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_fmasico = False
 
                 # --------------------------------------------------------------------------------------------
                 # Conteo del Set point flujo masico
-                if df.iloc[idx]['sp_fmasico'] > 0 and flag_sp_fmasico == True:
+                if df.iloc[idx]['sp_fmasico'] > 0 and flag_sp_fmasico is True:
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['sp_fmasico'] > 0 or df.iloc[idx_fmasico + 1]['sp_fmasico'] > 0:
@@ -177,18 +202,16 @@ def DF_Analitica_Esmalte(df):
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_sp_fmasico = False
 
                 # --------------------------------------------------------------------------------------------
                 # Conteo del Presion Atomizacion
-                if df.iloc[idx]['patomizacion'] > 0 and flag_patomizacion == True:
+                if df.iloc[idx]['patomizacion'] > 0 and flag_patomizacion is True:
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['patomizacion'] > 0 or df.iloc[idx_fmasico + 1]['patomizacion'] > 0:
@@ -207,27 +230,24 @@ def DF_Analitica_Esmalte(df):
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_patomizacion = False
                 # --------------------------------------------------------------------------------------------
                 # Conteo del  set_point -Presion Atomizacion
-                if df.iloc[idx]['sp_patomizacion'] > 0 and flag_sp_patomizacion == True:
+                if df.iloc[idx]['sp_patomizacion'] > 0 and flag_sp_patomizacion is True:
                     idx_fmasico = idx
 
-                    while df.iloc[idx_fmasico]['sp_patomizacion'] > 0 or df.iloc[idx_fmasico + 1][
-                        'sp_patomizacion'] > 0:
+                    while df.iloc[idx_fmasico]['sp_patomizacion'] > 0 or df.iloc[idx_fmasico + 1]['sp_patomizacion'] > 0:
 
                         # Acumulo la data del proceso
                         tiempo_sp_patomizacion += 1
                         total_sp_patomizacion += df.iloc[idx_fmasico]["sp_patomizacion"]
 
-                        ##Maximo de la presion de atomizacion
+                        # Maximo de la presion de atomizacion
                         # if max_patomizacion < df.iloc[idx_fmasico]["sp_patomizacion"]:
                         #    max_patomizacion = df.iloc[idx_fmasico]["sp_patomizacion"]
 
@@ -237,18 +257,16 @@ def DF_Analitica_Esmalte(df):
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_sp_patomizacion = False
 
                 # --------------------------------------------------------------------------------------------
                 # Conteo del Presion abanico
-                if df.iloc[idx]['pabanico'] > 0 and flag_pabanico == True:
+                if df.iloc[idx]['pabanico'] > 0 and flag_pabanico is True:
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['pabanico'] > 0 or df.iloc[idx_fmasico + 1]['pabanico'] > 0:
@@ -267,17 +285,15 @@ def DF_Analitica_Esmalte(df):
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_pabanico = False
                 # --------------------------------------------------------------------------------------------
                 # Conteo del  set_point -Presion abanico
-                if df.iloc[idx]['sp_pabanico'] > 0 and flag_sp_pabanico == True:
+                if df.iloc[idx]['sp_pabanico'] > 0 and flag_sp_pabanico is True:
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['sp_pabanico'] > 0 or df.iloc[idx_fmasico + 1]['sp_pabanico'] > 0:
@@ -286,7 +302,7 @@ def DF_Analitica_Esmalte(df):
                         tiempo_sp_pabanico += 1
                         total_sp_pabanico += df.iloc[idx_fmasico]["sp_pabanico"]
 
-                        ##Maximo de la presion de atomizacion
+                        # Maximo de la presion de atomizacion
                         # if max_patomizacion < df.iloc[idx_fmasico]["sp_pabanico"]:
                         #    max_patomizacion = df.iloc[idx_fmasico]["sp_pabanico"]
 
@@ -296,11 +312,9 @@ def DF_Analitica_Esmalte(df):
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                         if idx_fmasico >= df.shape[0]:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
                             flag_comp = 0
-                            # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
                     # Flag para no volver a entrar
                     flag_sp_pabanico = False
@@ -311,15 +325,13 @@ def DF_Analitica_Esmalte(df):
                 # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
                 if idx >= df.shape[0]:
                     flag_comp = 0
-                    # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
                     break  # Salir del ciclo para evitar un error
                 elif idx - 1 == 0:
                     flag_comp = 0
-                    # print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: El proceso no ha finalizado!\n")
 
-            # -------------------------------------------------------------------------------------------------------------
+            # ----------------------------------------------------------------------------------------------------------
             # Evitando la division por cero cuando el estado esta ON pero no sale flujo ni presión
-            # -------------------------------------------------------------------------------------------------------------
+            # ----------------------------------------------------------------------------------------------------------
             if tiempo_fmasico == 0:
                 tiempo_fmasico = tiempo_sp_fmasico
                 if tiempo_fmasico == 0:
@@ -352,21 +364,22 @@ def DF_Analitica_Esmalte(df):
             # -------------------------------------------------------------------------------------------------------------
             desv_flujo_masico_max = max_flujo_masico - (((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico) * 60)
 
-            Analisis_df.loc[count] = [fecha_ini, ndia, turno, hora, robot, float(flag_comp), referencia_esmaltada,float(tiempo_estado),
+            Analisis_df.loc[count] = [fecha_ini, ndia, turno, hora, robot, float(flag_comp),
+                                      referencia_esmaltada,float(tiempo_estado),
                                       float(tiempo_fmasico), float(tiempo_sp_fmasico),
-                                      Round(flujo_masico_total), Round(sp_flujo_masico_total),
-                                      Round((flujo_masico_total - sp_flujo_masico_total)* 1000),
-                                      Round(max_flujo_masico),
-                                      Round(((flujo_masico_total * 1000) / tiempo_fmasico)*60),
-                                      Round(((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico)*60), #[gr/min]
-                                      Round(desv_flujo_masico_max), peso_antes, peso_despues,
-                                      Max_Pred, Min_Pred, Round((Total_Pred/ tiempo_estado)),
-                                      max_patomizacion, Round((total_patomizacion/tiempo_patomizacion)),
-                                      Round((total_sp_patomizacion/tiempo_sp_patomizacion)),
-                                      Round((total_patomizacion/tiempo_patomizacion)- (total_sp_patomizacion/tiempo_sp_patomizacion)),
-                                      max_pabanico, Round((total_pabanico/tiempo_pabanico)),
-                                      Round((total_sp_pabanico/tiempo_sp_pabanico)),
-                                      Round((total_pabanico/tiempo_pabanico)- (total_sp_pabanico/tiempo_sp_pabanico)),
+                                      round_np(flujo_masico_total), round_np(sp_flujo_masico_total),
+                                      round_np((flujo_masico_total - sp_flujo_masico_total)* 1000),
+                                      round_np(max_flujo_masico),
+                                      round_np(((flujo_masico_total * 1000) / tiempo_fmasico)*60),
+                                      round_np(((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico)*60), #[gr/min]
+                                      round_np(desv_flujo_masico_max), peso_antes, peso_despues,
+                                      Max_Pred, Min_Pred, round_np((Total_Pred/ tiempo_estado)),
+                                      max_patomizacion, round_np((total_patomizacion/tiempo_patomizacion)),
+                                      round_np((total_sp_patomizacion / tiempo_sp_patomizacion)),
+                                      round_np((total_patomizacion/tiempo_patomizacion)-(total_sp_patomizacion/tiempo_sp_patomizacion)),
+                                      max_pabanico, round_np((total_pabanico/tiempo_pabanico)),
+                                      round_np((total_sp_pabanico/tiempo_sp_pabanico)),
+                                      round_np((total_pabanico/tiempo_pabanico) - (total_sp_pabanico/tiempo_sp_pabanico)),
                                       fecha_proceso]
 
             # Cuento la referencia esmaltada
