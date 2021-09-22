@@ -5,18 +5,18 @@
 # Libraries
 import datetime
 
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
 from pivottablejs import pivot_ui
-from st_aggrid import AgGrid, GridOptionsBuilder
 
 # Internal Function
-from Analysis_Function import analitica_esmalte, visual_tabla_dinam
+from Analysis_Function import analitica_esmalte, visual_tabla_dinam, sum_procesos
+from Plot_Function import plot_bar, plot_line
 from SQL_Function import sql_plot, sql_plot_all
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Streamlit Setting
 st.set_page_config(page_title="IIOT - Corona",
@@ -118,26 +118,15 @@ if page == "Celula de Esmaltado":
                 else:
                     Analisis_df = analitica_esmalte(df)
 
-                # ------------------------------------------------------------------------------------------------------
-                # Definiendo la tabla de visualización
-                # ------------------------------------------------------------------------------------------------------
-                gb = GridOptionsBuilder.from_dataframe(Analisis_df)
-
-                gb.configure_side_bar()
-                gb.configure_default_column(groupable=True, value=True, enableRowGroup=True,
-                                            aggFunc="sum",editable=False)
-                gridOptions = gb.build()
-
-                tabla = AgGrid(Analisis_df,
-                               editable=False, sortable=True, filter=True, resizable=True, defaultWidth=5,
-                               fit_columns_on_grid_load=False,
-                               theme="streamlit",  # "light", "dark", "blue", "fresh", "material"
-                               key='analisis_table', reload_data=True,
-                               gridOptions=gridOptions, enable_enterprise_modules=True)
+                # Visualizando la tabla
+                visual_tabla_dinam(Analisis_df, "analisis_table")
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
             # Reportes pre-establecidos de la data
             st.subheader("4. Reportes Consumos y Cantidades")
+            #ME QUEDO SOLO CON LOS PROCESOS QUE FUERON COMPLETADOS EN SU TOTALIDAD
+            Analisis_df = Analisis_df[Analisis_df["Proceso_Completo"] == 1]
+
             if st.checkbox("Reportes Pre-Establecidos"):
                 # ------------------------------------------------------------------------------------------------------
                 # Tablas dinamicas de cantidad de piezas
@@ -194,66 +183,55 @@ if page == "Celula de Esmaltado":
                 # ------------------------------------------------------------------------------------------------------
                 # Graficas de los reportes generados
                 with st.expander("Ver graficas"):
-                    p1, p2 = st.columns(2)
-                    iter_colum = cantidad_piezas_grap.columns.values.tolist()[2:]
+                    st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido por Robot, Referencia y Día**")
 
+                    # Filtrado y selección
+                    sel_rob0 = st.selectbox("¿Que robot desea analizar?", list(cantidad_piezas_grap["Robot"].unique()) + ["Ambos"],
+                                            0, key="rob00")
+                    if sel_rob0 != "Ambos":
+                        cantidad_piezas_filt = cantidad_piezas_grap[cantidad_piezas_grap["Robot"] == sel_rob0]
+                        esmalte_cons_filt = esmalte_cons_grap[esmalte_cons_grap["Robot"] == sel_rob0]
+                    else:
+                        cantidad_piezas_filt = cantidad_piezas_grap.copy()
+                        esmalte_cons_filt = esmalte_cons_grap.copy()
+
+                    p1, p2 = st.columns(2)
                     # -------------------------------------Plotly-------------------------------------------------------
                     # Cantidad de piezas esmaltadas
-                    fig = go.Figure()
-                    for elem in iter_colum:
-                        fig.add_trace(go.Bar(
-                            x=cantidad_piezas_grap["Fecha_planta"],
-                            y=cantidad_piezas_grap[int(elem)],
-                            # text=cantidad_piezas_grap[int(elem)],textposition='auto',
-                            name=elem))
-
-                    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
-                    fig.update_layout(barmode='group', bargap=0.1,  bargroupgap=0.02, xaxis_tickangle=0)
-                    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
-                    fig.update_layout(template="seaborn", title="Cantidad de Piezas Esmaltadas")
-
-                    # Set x-axis and y-axis title
-                    fig['layout']['xaxis']['title'] = 'Fecha'
-                    fig['layout']['yaxis']['title'] = 'Piezas Esmaltadas'
+                    fig = plot_bar(df=cantidad_piezas_filt, title="Cantidad de Piezas Esmaltadas",
+                                   ytitle='Piezas Esmaltadas')
 
                     p1.plotly_chart(fig, use_container_width=True)
 
                     # -------------------------------------Plotly-------------------------------------------------------
                     # Cantidad de esmalte usado
-                    iter_colum = esmalte_cons_grap.columns.values.tolist()[2:]
-                    fig = go.Figure()
-                    for elem in iter_colum:
-                        fig.add_trace(go.Bar(
-                            x=esmalte_cons_grap["Fecha_planta"],
-                            y=np.round(esmalte_cons_grap[int(elem)], 2),
-                            # text=np.round(esmalte_cons_grap[int(elem)],2),textposition='auto',
-                            name=elem))
-
-                    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
-                    fig.update_layout(barmode='group', bargap=0.1,  bargroupgap=0.02, xaxis_tickangle=0)
-                    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
-                    fig.update_layout(template="seaborn", title="Esmalte consumido por referencia")
-
-                    # Set x-axis and y-axis title
-                    fig['layout']['xaxis']['title'] = 'Fecha'
-                    fig['layout']['yaxis']['title'] = 'Esmaltade consumido en [Kg]'
+                    fig = plot_bar(df=esmalte_cons_filt, title="Esmalte Consumido por Referencia",
+                                   ytitle='Esmalte Consumido en [Kg]')
 
                     p2.plotly_chart(fig, use_container_width=True)
 
-                    # print(cantidad_piezas_grap["Fecha_planta"].unique())
-                    # colum_name = cantidad_piezas_grap.columns.values.tolist()[2:]
-                    #
-                    # sum_cantidad_piezas_grap = pd.DataFrame(
-                    #     '',
-                    #     #index=range(int(cantidad_piezas_grap["Fecha_planta"].nunique())),
-                    #     columns=["Fecha" , " Total"]
-                    # )
-                    # for i in cantidad_piezas_grap["Fecha_planta"].unique():
-                    #     sum_cantidad_piezas_grap["Fecha"] = i
-                    #     sum_cantidad_piezas_grap["Total"] = cantidad_piezas_grap[cantidad_piezas_grap["Fecha_planta"]
-                    #                                                              == i][colum_name].sum().sum()
-                    #     st.write(sum_cantidad_piezas_grap)
+                    # --------------------------------------------------------------------------------------------------
+                    st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido Total por Día**")
+                    pp1, pp2 = st.columns(2)
 
+                    # Grafica de total de piezas fabricadas por día objetivo de 700 piezas
+                    sum_cantidad = sum_procesos(cantidad_piezas_grap, "Piezas Esmaltadas")
+
+                    # PLOTLY
+                    fig = plot_line(sum_cantidad, "Piezas Esmaltadas por Robot", "Piezas Esmaltadas [Und]", flag=True)
+                    pp1.plotly_chart(fig, use_container_width=True)
+                    #--------------------------------------------------------------------------------------------------
+                    # Sumo el esmalte total en ambos o solo 1 robot
+                    sum_esmalte = sum_procesos(esmalte_cons_grap, "Esmalte Usado")
+                    x_column = sum_esmalte.columns.values.tolist()[1:]
+                    sum_esmalte["Total"] = 0
+                    for i in x_column:
+                        if i != "Total":
+                            sum_esmalte["Total"] += sum_esmalte[i]
+
+                    # PLOTLY
+                    fig = plot_line(sum_esmalte, "Esmalte Usado por Robot y Total", "Esmalte Usado [Kg]")
+                    pp2.plotly_chart(fig, use_container_width=True)
             # ----------------------------------------------------------------------------------------------------------
             # Programa para reporte manual de tablas dinamicas usando pivot_ui
             if st.checkbox("Reporte Manual"):
@@ -269,22 +247,16 @@ if page == "Celula de Esmaltado":
                 st.markdown("**Dispersión Esmaltado por Robot**")
 
                 # Selección y filtrado de la base de datos
-                ref = Analisis_df["Referencia"].unique()
-                rob = Analisis_df["Robot"].unique()
                 dt = Analisis_df["Fecha_planta"].unique()
 
                 ss1, ss2 = st.columns((3,1))
                 with ss2.form("Filtros"):
-                    selec_ref1 =st.multiselect("¿Que referencia desea analizar?", ref, ref[:], key="ref1")
-                    selec_robot1 =st.multiselect("¿Que robot desea analizar?", rob, rob[:], key="rob1")
                     selec_dt1 =st.multiselect("¿Que fecha desea analizar?", dt, dt[:], key="dt1")
                     st.form_submit_button("Filtrar")
 
                 # Fitrado solo procesos completos
-                report_df1 = Analisis_df[Analisis_df["Proceso_Completo"]== 1]
-                report_df1 = report_df1[report_df1["Referencia"].isin(selec_ref1)]
-                report_df1 = report_df1[report_df1["Robot"].isin(selec_robot1)]
-                report_df1 = report_df1[report_df1["Fecha_planta"].isin(selec_dt1)]
+                #report_df1 = Analisis_df[Analisis_df["Proceso_Completo"] == 1]
+                report_df1 = Analisis_df[Analisis_df["Fecha_planta"].isin(selec_dt1)]
 
                 # -------------------------------------Plotly-----------------------------------------------------------
                 # Grafica de dispersión del esmalte
@@ -301,6 +273,8 @@ if page == "Celula de Esmaltado":
                 # Set x-axis and y-axis title
                 fig['layout']['xaxis']['title'] = 'Robots'
                 fig['layout']['yaxis']['title'] = 'Esmalte Usado'
+                fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
+                fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
                 ss1.plotly_chart(fig, use_container_width=True)
                 # ------------------------------------------------------------------------------------------------------
@@ -309,9 +283,10 @@ if page == "Celula de Esmaltado":
                 sss1, sss2 = st.columns((3,1))
 
                 # Filtrado y selección
+                rob = Analisis_df["Robot"].unique()
                 sel_rob = sss2.selectbox("¿Que robot desea analizar?", rob, 0, key="rob0")
-                data = Analisis_df[Analisis_df["Proceso_Completo"]== 1] # Solo procesos completos
-                data = data[data["Robot"] == sel_rob]
+                #data = Analisis_df[Analisis_df["Proceso_Completo"]== 1] # Solo procesos completos
+                data = Analisis_df[Analisis_df["Robot"] == sel_rob]
 
                 # -------------------------------------Plotly-----------------------------------------------------------
                 # Grafica de dispersion del esmalte usado
@@ -326,6 +301,8 @@ if page == "Celula de Esmaltado":
                 # Set x-axis and y-axis title
                 fig['layout']['xaxis']['title'] = 'Fechas'
                 fig['layout']['yaxis']['title'] = 'Esmalte Usado'
+                fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
+                fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
                 sss1.plotly_chart(fig, use_container_width=True)
 # ----------------------------------------------------------------------------------------------------------------------

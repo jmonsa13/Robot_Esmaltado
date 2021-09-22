@@ -263,12 +263,12 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1):
     # Conexión y manejo robot 1
     df = sql_connect(tipo=tipo, turno=turno, day=day, ini=ini, database="robot1", table="robot1")
     df = fecha_format(df)
-    df["robot"] = "robot_1"
+    df["robot"] = "robot1"
 
     # Conexión y manejo robot 2
     df2 = sql_connect(tipo=tipo, turno=turno, day=day, ini=ini, database="robot2", table="robot2")
     df2 = fecha_format(df2)
-    df2["robot"] = "robot_2"
+    df2["robot"] = "robot2"
 
     # Defining the title and filename for saving the plots
     if tipo == "turno":

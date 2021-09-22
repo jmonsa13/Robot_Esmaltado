@@ -14,7 +14,42 @@ from st_aggrid import AgGrid, GridOptionsBuilder
 # Function definition
 
 
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+def sum_procesos(df, name):
+    """
+    Función para sumar los valores de las tablas dinamicas generadas por fecha
+    INPUT:
+        df: data frame pivotadeado a sumar
+        name: Nombre a poner en la columna
+    OUTPUT:
+        sum_df: data frame con la sumatoria
+    """
+    # Nombre de las columnas por los robot que se tienen
+    name_list = [name + " por " + i for i in df["Robot"].unique()]
+
+    colum_name = df.columns.values.tolist()[2:]
+
+    sum_df = pd.DataFrame(
+        '',
+        index=range(int(df["Fecha_planta"].nunique())),
+        columns=["Fecha_planta"] + name_list)
+
+    for i, elem in enumerate(df["Fecha_planta"].unique()):
+        sum_df.loc[sum_df.index[i], 'Fecha_planta'] = elem
+        for j, rob in enumerate(df["Robot"].unique()):
+            sum_df.loc[sum_df.index[i], name_list[j]] = df[(df["Fecha_planta"] == elem) & (df["Robot"] == rob)][colum_name].sum().sum()
+
+    return sum_df
+
+
 def visual_tabla_dinam(df, key):
+    """
+    Función para generar las tablas dinamicas que se visualizan
+    INPUT:
+        df: data frame a visualizar
+        key: Llave distinta para el objeto de streamlit
+
+    """
     # Definiendo la tabla de visualización
     gb = GridOptionsBuilder.from_dataframe(df)
 
