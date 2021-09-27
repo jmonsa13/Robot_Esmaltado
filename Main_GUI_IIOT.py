@@ -33,6 +33,8 @@ st.title(' 📈 IIOT - Corona 🤖')
 
 if page == "Celula de Esmaltado":
     st.header('Celula Robotizada de Esmaltado Girardota')
+
+    df = pd.DataFrame()
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Selección de la fecha y el robot que se va analizar
@@ -71,6 +73,10 @@ if page == "Celula de Esmaltado":
     with col2:
         st.markdown("**Selección del Robot**")
         sel_robot = st.radio("¿Que Robot desea analizar?", ('Robot 1', 'Robot 2', 'Ambos'), key="robot")
+
+        flag_download = False
+        if st.checkbox("Descargar nuevamente"):
+            flag_download = True
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Conexión a la base de datos SQL, descarga y grafica
@@ -88,20 +94,22 @@ if page == "Celula de Esmaltado":
             # Por día
             if sel_fecha == "Por día":
                 if sel_robot == "Ambos":
-                    robot1, robot2, fig = sql_plot_all(tipo="day", day=str(sel_dia))
+                    robot1, robot2, fig = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    df, fig = sql_plot(tipo="day", day=str(sel_dia), database=tabla_sql, table=tabla_sql)
+                    df, fig = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
+                                       redownload=flag_download)
                     st.plotly_chart(fig, use_container_width=True)
 
             # Por rango de fecha
             elif sel_fecha == "Por rango de días":
                 if sel_robot == "Ambos":
-                    robot1, robot2, fig = sql_plot_all(tipo="rango", ini=str(sel_dia_ini), day=str(sel_dia_fin))
+                    robot1, robot2, fig = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                                                       redownload=flag_download)
                     st.plotly_chart(fig, use_container_width=True)
                 else:
-                    df, fig = sql_plot(tipo="rango", ini=str(sel_dia_ini), day=str(sel_dia_fin),
-                                       database=tabla_sql, table=tabla_sql)
+                    df, fig = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                                       database=tabla_sql, table=tabla_sql, redownload=flag_download)
                     st.plotly_chart(fig, use_container_width=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------

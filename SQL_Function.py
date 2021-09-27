@@ -3,6 +3,7 @@
 # 21-September-2021
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
+import os
 import calendar as cl
 import datetime
 
@@ -20,7 +21,7 @@ def load_data(folder="./Data/Raw/", filename="tabla_robot1_2021_04_22_1012.csv")
     """
     Función que carga el archivo csv guardado al conectar con la base de datos y devuelve un dataframe
     """
-    df = pd.read_csv(folder + filename, )
+    df = pd.read_csv(folder + filename)
 
     return df
 
@@ -31,6 +32,7 @@ def fecha_format(df):
     """
     # Organizar el tema de fecha
     df["fecha"] = pd.to_datetime(df['fecha'], format='%Y/%m/%d', exact=False)
+    df["fecha"] = df["fecha"].dt.normalize()
     df['fecha'] += pd.to_timedelta(df["hora"], unit='h')
     df['fecha'] += pd.to_timedelta(df["minuto"], unit='m')
     df['fecha'] += pd.to_timedelta(df["segundo"], unit='s')
@@ -60,32 +62,18 @@ def fecha_format(df):
     return df
 
 
-def prev_day(day):
+def add_day(day, add=1):
     """
-    Función que devuelve el día anterior al entregado, teniendo en cuenta inicio de mes e inicio de año
+    Función agrega o quita dias, teniendo en cuenta inicio de mes e inicio de año
     INPUT
         day = "2021-02-01"  EN STRING
     OUTPUT
-        ini_date = día anterior al día ingresado EN STR
-        fin_date = day EN STR
+        ini_date = día entregado en STR
+        fin_date = día con los días sumados o restados en STR al día ingresado
     """
     l_day_n = [int(x) for x in day.split("-")]
-
-    if l_day_n[2] - 1 == 0:
-        c_year = l_day_n[0]
-        c_month = l_day_n[1] - 1
-
-        if l_day_n[1] - 1 == 0:
-            c_year = l_day_n[0] - 1
-            c_month = 12
-        c_day = cl.monthrange(c_year, c_month)[1]
-        # Tomo el dato del día especificado + las horas del turno 3 del día anterior
-        ini_date = datetime.date(c_year, c_month, c_day)
-        fin_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
-    else:
-        # Tomo el dato del día especificado + las horas del turno 3 del día anterior
-        ini_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2] - 1)
-        fin_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
+    ini_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
+    fin_date = ini_date + datetime.timedelta(days=add)
 
     return str(ini_date), str(fin_date)
 
@@ -134,9 +122,54 @@ def turno_time(day, turno):
 
     return ini_date, fin_date, title_plot
 
+#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+def find_load(tipo, day, ini, database, table, redownload):
+    """
+    Función que busca y carga el archivo de datos si este ya ha sido descargado.
+    INPUT:
+        tipo:
+    OUTPUT:
+        pd_sql: dataframe con los datos
+    """
+    directory = './Data/Raw/'
+    filenames = os.listdir(directory)
+
+    if tipo == "day_planta":
+        # Creo el nombre del archivo a buscar
+        filename = 'tabla_' + table + '_' + day + '.csv'
+        if filename in filenames and redownload is False:
+            pd_sql = load_data(folder=directory, filename=filename)
+        else:
+            pd_sql = sql_connect(tipo=tipo, day=day, database=database, table=table)
+
+    elif tipo == "rango_planta":
+        # Fecha Inicial
+        l_ini_n = [int(x) for x in ini.split("-")]
+        ini_date = datetime.date(l_ini_n[0], l_ini_n[1], l_ini_n[2])
+        # Fecha Final
+        l_day_n = [int(x) for x in day.split("-")]
+        day_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
+        # Empty datafram
+        pd_sql = pd.DataFrame()
+
+        # Recorro los días de ese periodo de tiempo
+        while ini_date <= day_date:
+            # Creo el nombre del archivo a buscar
+            filename = 'tabla_' + table + '_' + str(ini_date) + '.csv'
+            if filename in filenames and redownload is False:
+                aux = load_data(folder=directory, filename=filename)
+            else:
+                aux = sql_connect(tipo="day_planta", day=str(ini_date), database=database, table=table)
+
+            pd_sql = pd.concat([pd_sql, aux])
+            # Avanzo un día
+            ini_date = ini_date + datetime.timedelta(days=1)
+
+    return pd_sql
+
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def sql_connect(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1, server='EASAB101', database='robot1',
+def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
                 table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
@@ -152,28 +185,6 @@ def sql_connect(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1, server=
     # ------------------------------------------------------------------------------------------------------------------
     # Tipos de conexiones establecidas para traer distintas cantidades de datos
     # ------------------------------------------------------------------------------------------------------------------
-    # if tipo == "all": # NO RECOMENDADA TRAERÍA MUCHA INFORMACIPON
-    #     pd_sql = pd.read_sql_query('SELECT * FROM ' + database + '.dbo.' + table, conn)
-    #
-    #     # Saving the sql dataframe to a output file
-    #     now = datetime.datetime.now()
-    #     dt_string = now.strftime("%Y_%m_%d_%H%M")
-    #
-    #     # Guardando los datos en archivos estaticos
-    #     pd_sql.to_csv('./Data/Raw/All_tabla_' + table + '_' + dt_string + '.csv', index=False)
-    #     # pd_sql.to_excel('./Data/Raw/All_tabla_' + table + '_'+ dt_string + '.xlsx', index = False )
-    #
-    # elif tipo == "hour":
-    #    pd_sql = pd.read_sql_query('SELECT TOP '+ str(hour * 3600)   +' * FROM '+database+'.dbo.'+table +
-    #                               " WHERE fecha like '" + day+ "'" + ' ORDER BY hora DESC', conn)
-    #
-    #    # Saving the sql dataframe to a output file
-    #    now = datetime.datetime.now()
-    #    dt_string = now.strftime("%Y_%m_%d_%H%M")
-    #
-    #    pd_sql.to_csv('./Data/Raw/tabla_' + table + '_'+ dt_string + '_hour.csv', index = False)
-    #    pd_sql.to_excel('./Data/Raw/tabla_' + table + '_'+ dt_string + '_hour.xlsx', index = False )
-
     if tipo == "day":
         pd_sql = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + day + "'",
                                    conn)
@@ -182,31 +193,23 @@ def sql_connect(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1, server=
         pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + '.csv', index=False)
         # pd_sql.to_excel('./Data/Raw/tabla_' + table + '_'+ day + '.xlsx', index = False )
 
-    elif tipo == "rango":
-        pd_sql = pd.read_sql_query(
-            "SELECT * FROM " + database + ".dbo." + table + " WHERE fecha between '" + ini + "'" + " AND '" + day + "'",
-            conn)
+    elif tipo == "day_planta":
+        ini, fin = add_day(day)
+        pd_sql_1 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + ini + "'"
+                                     + " AND hora between 6 and 23", conn)
 
+        pd_sql_2 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + fin + "'"
+                                     + " AND hora between 0 and 5", conn)
+        pd_sql = pd.concat([pd_sql_1, pd_sql_2])
         # Guardando los datos en archivos estaticos
-        pd_sql.to_csv('./Data/Raw/tabla_' + table + '_entre_' + ini + "_y_" + day + '.csv', index=False)
-        # pd_sql.to_excel('./Data/Raw/tabla_' + table + '_entre_'+ ini +"_y_"+ day + '.xlsx', index = False )
-
-    elif tipo == "turno":
-        ini, day = prev_day(day)
-
-        pd_sql = pd.read_sql_query(
-            "SELECT * FROM " + database + ".dbo." + table + " WHERE fecha between '" + ini + "'" + " AND '" + day + "'",
-            conn)
-
-        # Guardando los datos en archivos estaticos
-        pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + "_turno_" + str(turno) + '.csv', index=False)
-        # pd_sql.to_excel('./Data/Raw/tabla_' + table + '_entre_'+ ini +"_y_"+ day + '.xlsx', index = False )
+        pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + '.csv', index=False)
 
     return pd_sql
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def sql_plot(tipo="day", turno=1, day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1"):
+def sql_plot(tipo="day", turno=1, day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1",
+             redownload=False):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
     INPUT:
@@ -224,18 +227,14 @@ def sql_plot(tipo="day", turno=1, day="2021-04-28", ini="2021-04-27", database='
     title = ""
 
     # Conexión y manejo robot 1
-    df = sql_connect(tipo=tipo, day=day, ini=ini, turno=turno, database=database, table=table)
+    df = find_load(tipo=tipo, day=day, ini=ini, database=database, table=table, redownload=redownload)
     df = fecha_format(df)
     df["robot"] = table
 
     # Defining the title and filename for saving the plots
-    if tipo == "turno":
-        ini_date, fin_date, title = turno_time(day, turno)
-        df = df[(df.index >= ini_date) & (df.index <= fin_date)]
-        title = "Variables " + table + " de Esmaltado Día " + day + " turno " + str(turno)
-    elif tipo == "day":
+    if tipo == "day" or tipo == "day_planta":
         title = "Variables " + table + " de Esmaltado Día " + day
-    elif tipo == "rango":
+    elif tipo == "rango" or tipo == "rango_planta":
         title = "Variables " + table + " de Esmaltado entre " + ini + " y " + day
 
     # Plotting the DF
@@ -244,7 +243,7 @@ def sql_plot(tipo="day", turno=1, day="2021-04-28", ini="2021-04-27", database='
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1):
+def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=False):
     """
     Función que se conecta a la base de datos de ambos robots y crea el archivo de visualización a la vez que lo guarda
     INPUT:
@@ -259,26 +258,20 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", turno=1):
     """
     # Iniciación variables
     title = ""
-
     # Conexión y manejo robot 1
-    df = sql_connect(tipo=tipo, turno=turno, day=day, ini=ini, database="robot1", table="robot1")
+    df = find_load(tipo=tipo, day=day, ini=ini, database="robot1", table="robot1", redownload=redownload)
     df = fecha_format(df)
     df["robot"] = "robot1"
 
     # Conexión y manejo robot 2
-    df2 = sql_connect(tipo=tipo, turno=turno, day=day, ini=ini, database="robot2", table="robot2")
+    df2 = find_load(tipo=tipo, day=day, ini=ini, database="robot2", table="robot2", redownload=redownload)
     df2 = fecha_format(df2)
     df2["robot"] = "robot2"
 
     # Defining the title and filename for saving the plots
-    if tipo == "turno":
-        ini_date, fin_date, title = turno_time(day, turno)
-        df = df[(df.index >= ini_date) & (df.index <= fin_date)]
-        df2 = df2[(df2.index >= ini_date) & (df2.index <= fin_date)]
-        title = "All Robots día " + day + " turno " + str(turno)
-    elif tipo == "day":
+    if tipo == "day" or tipo == "day_planta":
         title = "Variables Robots de Esmaltado Día " + day
-    elif tipo == "rango":
+    elif tipo == "rango" or tipo == "rango_planta":
         title = "Variables Robots de Esmaltado entre " + ini + " y " + day
 
     # Plotting the DF
