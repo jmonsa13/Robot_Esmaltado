@@ -78,50 +78,6 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-def turno_time(day, turno):
-    """
-    Función que devuelve el marco de tiempo del turno indicado para filtrar el data set y el titulo de la grafica
-    INPUT
-        day = "2021-02-01"  EN STRING
-        turno = 1 or 2 or 3 EN INT
-    OUTPUT
-        ini_date = Fecha y hora de inicio del turno EN DATETIME
-        fin_date = Fecha y hora de fin del turno EN DATETIME
-        title_plot = Titulo para la grafica
-    """
-    l_day_n = [int(x) for x in day.split("-")]
-
-    # Que pasa si el dia era el 1 del mes o si el mes es el 1 del año....
-    if l_day_n[2] - 1 == 0:
-        c_year = l_day_n[0]
-        c_month = l_day_n[1] - 1
-
-        if l_day_n[1] - 1 == 0:
-            c_year = l_day_n[0] - 1
-            c_month = 12
-        c_day = cl.monthrange(c_year, c_month)[1]
-
-        # Tomo el dato del día especificado + las horas del turno 3 del día anterior
-        ini_date = datetime.datetime(c_year, c_month, c_day, 22, 0, 0)
-        fin_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 23, 59, 59)
-    else:
-        # Tomo el dato del día especificado + las horas del turno 3 del día anterior
-        ini_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2] - 1, 22, 0, 0)
-        fin_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 23, 59, 59)
-
-    if turno == 1:  # De 6:00 am a 2:00 pm
-        ini_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 6, 0, 0)
-        fin_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 13, 59, 59)
-    elif turno == 2:  # De 2:00 pm a 10:00 pm
-        ini_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 14, 0, 0)
-        fin_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 21, 59, 59)
-    elif turno == 3:  # De 10:00 pm a 06:00 am
-        fin_date = datetime.datetime(l_day_n[0], l_day_n[1], l_day_n[2], 5, 59, 59)
-
-    title_plot = "Variables Robots de Esmaltado turno " + str(turno) + " día " + day
-
-    return ini_date, fin_date, title_plot
-
 #@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
 def find_load(tipo, day, ini, database, table, redownload):
     """
