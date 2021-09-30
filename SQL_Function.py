@@ -90,6 +90,9 @@ def find_load(tipo, day, ini, database, table, redownload):
     directory = './Data/Raw/'
     filenames = os.listdir(directory)
 
+    # Empty datafram
+    pd_sql = pd.DataFrame()
+
     if tipo == "day_planta":
         # Creo el nombre del archivo a buscar
         filename = 'tabla_' + table + '_' + day + '.csv'
@@ -105,8 +108,6 @@ def find_load(tipo, day, ini, database, table, redownload):
         # Fecha Final
         l_day_n = [int(x) for x in day.split("-")]
         day_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
-        # Empty datafram
-        pd_sql = pd.DataFrame()
 
         # Recorro los días de ese periodo de tiempo
         while ini_date <= day_date:
@@ -163,18 +164,42 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
     return pd_sql
 
 
+def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='robot1',
+                table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
+    """
+    Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
+    INPUT:
+        tipo = ["day", "all", "turno", "rango"]
+        day = Día inicial EN STR
+    OUTPUT:
+        pd_sql = pandas dataframe traido de la base de dato SQL
+    """
+    # Connecting to the sql database
+    conn = pyodbc.connect(
+        'driver={SQL Server};server=%s;database=%s;uid=%s;pwd=%s' % (server, database, username, password))
+    # ------------------------------------------------------------------------------------------------------------------
+    # Tipos de conexiones establecidas para traer distintas cantidades de datos
+    # ------------------------------------------------------------------------------------------------------------------
+
+    pd_sql = pd.read_sql_query('SELECT TOP ' + str(time) + ' * FROM ' + database + '.dbo.' + table +
+                               " WHERE fecha like '" + day + "'" + ' ORDER BY hora DESC, minuto DESC, '
+                                                                  'segundo DESC ', conn)
+
+    return pd_sql
+
+
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def sql_plot(tipo="day", turno=1, day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1",
+def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1",
              redownload=False):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
     INPUT:
-        tipo = ["day", "all", "turno", "rango"]
-        turno = 1 or 2 or 3
+        tipo = ["day_planta", "rango_planta"]
         day = Día inicial EN STR
         ini = Día final EN STR (util cuando el tipo es rango)
         database = Base de dato a la cual conectarse
         table = tabla a la base de dato a la cual conectarse
+        redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
     OUTPUT:
         df = pandas dataframe traido de la base de dato SQL
         fig = objeto figura para dibujarlo externamente de la función
@@ -203,10 +228,10 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=Fals
     """
     Función que se conecta a la base de datos de ambos robots y crea el archivo de visualización a la vez que lo guarda
     INPUT:
-        tipo = ["day", "all", "turno", "rango"]
-        turno = 1 or 2 or 3
+        tipo = ["day_planta", "rango_planta"]
         day = Día inicial EN STR
         ini = Día final EN STR (util cuando el tipo es rango)
+        redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
     OUTPUT:
         df = pandas dataframe traido de la base de dato SQL del robot 1
         df2 = pandas dataframe traido de la base de dato SQL del robot 2
@@ -229,6 +254,36 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=Fals
         title = "Variables Robots de Esmaltado Día " + day
     elif tipo == "rango" or tipo == "rango_planta":
         title = "Variables Robots de Esmaltado entre " + ini + " y " + day
+
+    # Plotting the DF
+    fig = plot_html_all(df, df2, title)
+
+    return df, df2, fig
+
+def sql_plot_live(time=60,  day="2021-04-28"):
+    """
+    Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
+    INPUT:
+        time = tiempo a visualizar
+        day = Día inicial EN STR
+    OUTPUT:
+        df = pandas dataframe traido de la base de dato SQL
+        fig = objeto figura para dibujarlo externamente de la función
+    """
+    # Conexión y manejo robot 1
+    df = sql_connect_live(time=time, day=day, database="robot1", table="robot1")
+    df = fecha_format(df)
+    df["robot"] = "robot1"
+
+    # Conexión y manejo robot 2
+    df2 = sql_connect_live(time=time+20, day=day, database="robot2", table="robot2")
+    df2 = fecha_format(df2)
+    df2["robot"] = "robot2"
+
+    df2 = df2.loc[df.index[0]:df.index[-1], :]
+
+    # Defining the title and filename for saving the plots
+    title = "Variables Robots de Esmaltado Día " + day
 
     # Plotting the DF
     fig = plot_html_all(df, df2, title)

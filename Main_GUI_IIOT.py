@@ -4,6 +4,7 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
 import datetime
+import time
 
 import pandas as pd
 import plotly.express as px
@@ -14,8 +15,8 @@ from pivottablejs import pivot_ui
 
 # Internal Function
 from Analysis_Function import analitica_esmalte, visual_tabla_dinam, sum_procesos
-from Plot_Function import plot_bar, plot_line
-from SQL_Function import sql_plot, sql_plot_all
+from Plot_Function import plot_bar, plot_line, plot_html_all
+from SQL_Function import sql_plot, sql_plot_all, sql_plot_live, sql_connect_live, fecha_format
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Streamlit Setting
@@ -24,7 +25,7 @@ st.set_page_config(page_title="IIOT - Corona",
                    page_icon="📈",
                    layout="wide")
 
-tabs = ["Celula de Esmaltado"]
+tabs = ["Celula de Esmaltado", "Online"]
 page = st.sidebar.radio("Tabs", tabs)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
@@ -313,6 +314,67 @@ if page == "Celula de Esmaltado":
                 fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
                 sss1.plotly_chart(fig, use_container_width=True)
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+if page == "Online":
+    st.header("En construcción - Ventana para ver el estado en vivo")
+
+    # Placeholder definition
+    placeholder = st.empty()
+    start_button = st.empty()
+    # Current day
+    sel_dia = datetime.date.today()
+
+    if start_button.button('Ver en vivo', key='start'):
+
+        # Variables initialization
+        start_button.empty()
+        live_pd_r1 = pd.DataFrame()
+        live_pd_r2 = pd.DataFrame()
+        initial_time = 60
+        orig_size_1 = 10 * initial_time
+
+        # Initial plot
+        # start_time = time.time()
+        live_pd_r1, live_pd_r2, fig1 = sql_plot_live(time=10 * initial_time, day=str(sel_dia))
+        placeholder.plotly_chart(fig1, use_container_width=True)
+        # print("---initial_plot %s seconds ---" % (time.time() - start_time))
+
+        # Run when activated
+        if st.button('Detener', key='stop'):
+            pass
+        while True:
+            # Robot 1
+            # start_time = time.time()
+            r1_update = sql_connect_live(time=60, day=str(sel_dia), database='robot1',
+                                         table="robot1")
+            r1_update = fecha_format(r1_update)
+            r1_update["robot"] = "robot1"
+            live_pd_r1 = pd.concat([live_pd_r1, r1_update]).drop_duplicates()
+
+            # Robot 2
+            r2_update = sql_connect_live(time=60 + 20, day=str(sel_dia), database='robot2',
+                                         table="robot2")
+            r2_update = fecha_format(r2_update)
+            r2_update["robot"] = "robot2"
+            live_pd_r2 = pd.concat([live_pd_r2, r2_update]).drop_duplicates()
+
+            # Setting of the same period of time for both robots
+            final_size_1 = live_pd_r1.shape[0]
+            live_pd_r1 = live_pd_r1.iloc[(final_size_1 - orig_size_1):, :]
+            live_pd_r2 = live_pd_r2.loc[live_pd_r1.index[0]:live_pd_r1.index[-1], :]
+
+            # Plotting
+            # Defining the title and filename for saving the plots
+            title = "En vivo Robots de Esmaltado Día " + str(sel_dia)
+            fig = plot_html_all(live_pd_r1, live_pd_r2, title)
+            placeholder.plotly_chart(fig, use_container_width=True)
+            # print("---plot %s seconds ---" % (time.time() - start_time))
+
+            # Wait x seconds before updating
+            time.sleep(30)
+
 # ----------------------------------------------------------------------------------------------------------------------
 st.sidebar.header("Acerca de la App")
 st.sidebar.markdown("**Creado por:**")
