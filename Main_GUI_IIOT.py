@@ -78,6 +78,7 @@ if page == "Celula de Esmaltado":
         flag_download = False
         if st.checkbox("Descargar nuevamente"):
             flag_download = True
+            st.caching.clear_cache()
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Conexión a la base de datos SQL, descarga y grafica
@@ -127,13 +128,18 @@ if page == "Celula de Esmaltado":
                 else:
                     Analisis_df = analitica_esmalte(df)
 
+                # Aseguro los datos como numericos
+                float_columns = Analisis_df.columns.values.tolist()[7:30]
+                Analisis_df[float_columns] = Analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
+
                 # Visualizando la tabla
                 visual_tabla_dinam(Analisis_df, "analisis_table")
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
             # Reportes pre-establecidos de la data
             st.subheader("4. Reportes Consumos y Cantidades")
-            #ME QUEDO SOLO CON LOS PROCESOS QUE FUERON COMPLETADOS EN SU TOTALIDAD
+
+            # ME QUEDO SOLO CON LOS PROCESOS QUE FUERON COMPLETADOS EN SU TOTALIDAD
             Analisis_df = Analisis_df[Analisis_df["Proceso_Completo"] == 1]
 
             if st.checkbox("Reportes Pre-Establecidos"):
@@ -218,12 +224,17 @@ if page == "Celula de Esmaltado":
                                    ytitle='Esmalte Consumido en [Kg]')
 
                     p2.plotly_chart(fig, use_container_width=True)
-
                     # --------------------------------------------------------------------------------------------------
                     st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido Total por Día**")
+                    st.markdown("Solo las referencias de productos")
+
                     pp1, pp2 = st.columns(2)
 
                     # Grafica de total de piezas fabricadas por día objetivo de 700 piezas
+                    # ME QUEDO SOLO CON LAS REFERENCIAS REALES DEL PROCESO
+                    error_list = [0, 101, 126]
+
+                    cantidad_piezas_grap = cantidad_piezas_grap.loc[:, ~cantidad_piezas_grap.columns.isin(error_list)]
                     sum_cantidad = sum_procesos(cantidad_piezas_grap, "Piezas Esmaltadas")
 
                     # PLOTLY
@@ -231,7 +242,9 @@ if page == "Celula de Esmaltado":
                     pp1.plotly_chart(fig, use_container_width=True)
                     #--------------------------------------------------------------------------------------------------
                     # Sumo el esmalte total en ambos o solo 1 robot
+                    esmalte_cons_grap = esmalte_cons_grap.loc[:, ~esmalte_cons_grap.columns.isin(error_list)]
                     sum_esmalte = sum_procesos(esmalte_cons_grap, "Esmalte Usado")
+
                     x_column = sum_esmalte.columns.values.tolist()[1:]
                     sum_esmalte["Total"] = 0
                     for i in x_column:

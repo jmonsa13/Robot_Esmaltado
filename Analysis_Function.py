@@ -205,7 +205,16 @@ def analitica_esmalte(df):
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            if df.iloc[idx_fmasico]['fmasico'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_fmasico += 1
+                                flujo_masico_total += df.iloc[idx_fmasico]["fmasico"] / 60 / 1000
+
+                                # Maximo del flujo maxico
+                                if max_flujo_masico < df.iloc[idx_fmasico]["fmasico"]:
+                                    max_flujo_masico = df.iloc[idx_fmasico]["fmasico"]
+
                             flag_comp = 0
                             print(
                                 "¡NO SE TIENEN DATOS SUFICIENTE DE LA ULTIMA PIEZA ESMALTADA: "
@@ -235,7 +244,12 @@ def analitica_esmalte(df):
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            if df.iloc[idx_fmasico]['sp_fmasico'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_sp_fmasico += 1
+                                sp_flujo_masico_total += df.iloc[idx_fmasico]["sp_fmasico"] / 60 / 1000
+
                             flag_comp = 0
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
@@ -248,7 +262,7 @@ def analitica_esmalte(df):
                 # Conteo del Presion Atomizacion
                 if df.iloc[idx]['patomizacion'] > 0 and flag_patomizacion is True:
                     idx_fmasico = idx
-
+                    # El or es por si por 1 segundo la variable baja a 0 por ruidos no parar la medición
                     while df.iloc[idx_fmasico]['patomizacion'] > 0 or df.iloc[idx_fmasico + 1]['patomizacion'] > 0:
 
                         # Acumulo la data del proceso
@@ -263,7 +277,17 @@ def analitica_esmalte(df):
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            # Para tomar el ultimo dato
+                            if df.iloc[idx_fmasico]['patomizacion'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_patomizacion += 1
+                                total_patomizacion += df.iloc[idx_fmasico]["patomizacion"]
+
+                                # Maximo de la presion de atomizacion
+                                if max_patomizacion < df.iloc[idx_fmasico]["patomizacion"]:
+                                    max_patomizacion = df.iloc[idx_fmasico]["patomizacion"]
+
                             flag_comp = 0
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
@@ -282,15 +306,16 @@ def analitica_esmalte(df):
                         tiempo_sp_patomizacion += 1
                         total_sp_patomizacion += df.iloc[idx_fmasico]["sp_patomizacion"]
 
-                        # Maximo de la presion de atomizacion
-                        # if max_patomizacion < df.iloc[idx_fmasico]["sp_patomizacion"]:
-                        #    max_patomizacion = df.iloc[idx_fmasico]["sp_patomizacion"]
-
                         # Avanzo en el df
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            if df.iloc[idx_fmasico]['sp_patomizacion'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_sp_patomizacion += 1
+                                total_sp_patomizacion += df.iloc[idx_fmasico]["sp_patomizacion"]
+
                             flag_comp = 0
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
@@ -318,7 +343,16 @@ def analitica_esmalte(df):
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            if df.iloc[idx_fmasico]['pabanico'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_pabanico += 1
+                                total_pabanico += df.iloc[idx_fmasico]["pabanico"]
+
+                                # Maximo de la presion de atomizacion
+                                if max_pabanico < df.iloc[idx_fmasico]["pabanico"]:
+                                    max_pabanico = df.iloc[idx_fmasico]["pabanico"]
+
                             flag_comp = 0
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
@@ -332,20 +366,20 @@ def analitica_esmalte(df):
                     idx_fmasico = idx
 
                     while df.iloc[idx_fmasico]['sp_pabanico'] > 0 or df.iloc[idx_fmasico + 1]['sp_pabanico'] > 0:
-
                         # Acumulo la data del proceso
                         tiempo_sp_pabanico += 1
                         total_sp_pabanico += df.iloc[idx_fmasico]["sp_pabanico"]
-
-                        # Maximo de la presion de atomizacion
-                        # if max_patomizacion < df.iloc[idx_fmasico]["sp_pabanico"]:
-                        #    max_patomizacion = df.iloc[idx_fmasico]["sp_pabanico"]
 
                         # Avanzo en el df
                         idx_fmasico += 1
 
                         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-                        if idx_fmasico >= df.shape[0]:
+                        if idx_fmasico >= df.shape[0]-1:
+                            if df.iloc[idx_fmasico]['sp_pabanico'] > 0:
+                                # Acumulo la data del proceso
+                                tiempo_sp_pabanico += 1
+                                total_sp_pabanico += df.iloc[idx_fmasico]["sp_pabanico"]
+
                             flag_comp = 0
                             break  # Salir del ciclo para evitar un error
                         elif idx_fmasico - 1 == 0:
