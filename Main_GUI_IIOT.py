@@ -14,7 +14,7 @@ import streamlit.components.v1 as components
 from pivottablejs import pivot_ui
 
 # Internal Function
-from Analysis_Function import analitica_esmalte, visual_tabla_dinam, sum_procesos
+from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
 from Plot_Function import plot_bar, plot_line, plot_html_all
 from SQL_Function import sql_plot, sql_plot_all, sql_plot_live, sql_connect_live, fecha_format
 
@@ -95,6 +95,7 @@ if page == "Celula de Esmaltado":
             # Definición del rango de fecha seleccionado
             # Por día
             if sel_fecha == "Por día":
+                text_dia = str(sel_dia)
                 if sel_robot == "Ambos":
                     robot1, robot2, fig = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
                     st.plotly_chart(fig, use_container_width=True)
@@ -105,6 +106,7 @@ if page == "Celula de Esmaltado":
 
             # Por rango de fecha
             elif sel_fecha == "Por rango de días":
+                text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
                 if sel_robot == "Ambos":
                     robot1, robot2, fig = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
                                                        redownload=flag_download)
@@ -119,18 +121,13 @@ if page == "Celula de Esmaltado":
         st.subheader("3. Analizar Información")
         if st.checkbox("Analizar", key="Analizar"):
             with st.spinner('Analizando la información...'):
-
                 # Ejecuto la función que analisa el DF descargado
                 if sel_robot == "Ambos":
-                    Analisis_df1 = analitica_esmalte(robot1)
-                    Analisis_df2 = analitica_esmalte(robot2)
+                    Analisis_df1 = find_analisis(df=robot1, robot="robot1", text_dia=text_dia, redownload=flag_download)
+                    Analisis_df2 = find_analisis(df=robot2, robot="robot2", text_dia=text_dia, redownload=flag_download)
                     Analisis_df = pd.concat([Analisis_df1, Analisis_df2])
                 else:
-                    Analisis_df = analitica_esmalte(df)
-
-                # Aseguro los datos como numericos
-                float_columns = Analisis_df.columns.values.tolist()[7:30]
-                Analisis_df[float_columns] = Analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
+                    Analisis_df = find_analisis(df=df, robot=tabla_sql, text_dia=text_dia, redownload=flag_download)
 
                 # Visualizando la tabla
                 visual_tabla_dinam(Analisis_df, "analisis_table")

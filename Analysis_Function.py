@@ -4,11 +4,11 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
 import datetime
+import os
 
 import numpy as np
 import pandas as pd
 import streamlit as st
-
 from st_aggrid import AgGrid, GridOptionsBuilder
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
@@ -72,23 +72,48 @@ def round_np(x):
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
-def analitica_esmalte(df):
+def find_analisis(df, robot, text_dia, redownload):
+    """
+    Función que busca y carga el archivo de datos si este ya ha sido descargado.
+    INPUT:
+        tipo:
+    OUTPUT:
+        pd_sql: dataframe con los datos
+    """
+    directory = './Data/Analizadas/'
+    filenames = os.listdir(directory)
+
+    # Empty datafram
+    analisis_df = pd.DataFrame()
+
+    # Creo el nombre del archivo a buscar
+    filename = 'analisis_' + robot + '_' + text_dia + '.csv'
+    if filename in filenames and redownload is False:
+        analisis_df = pd.read_csv(directory + filename)
+    else:
+        analisis_df = analitica_esmalte(df=df, table=robot, periodo=text_dia)
+
+    return analisis_df
+
+
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+def analitica_esmalte(df, table, periodo):
     """
     Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado
     """
     # Inicialización del DF
-    Analisis_df = pd.DataFrame(columns=["Fecha", "Día", "Turno", "Hora", "Robot", "Proceso_Completo",
+    Analisis_df = pd.DataFrame(columns=["Fecha", "Dia", "Turno", "Hora", "Robot", "Proceso_Completo",
                                         "Referencia", "Tiempo_Estado [s]", "Tiempo_Esmaltado [s]",
                                         "Tiempo_Esmaltado_SP [s]",
                                         "Esmalte_Usado [Kg]", "Esmalte_Usado_SP [Kg]", "Diff_Esmalte [gr]",
                                         "Max_Fmasico [gr/min]",
                                         "Promedio_Fmasico [gr/min]", "Promedio_SP_Fmasico [gr/min]",
-                                        "Desviación_max_Fmasico [gr/min]", "Peso_Antes [Kg]", "Peso_Despues [kg]",
-                                        "Max_Presión_Red [psi]", "Min_Presión_Red [psi]", "Promedio_Presión_Red [psi]",
-                                        "Max_Presión_Atomización [psi]", "Promedio_Presión_Atomización [psi]",
-                                        "Promedio_SP_Presión_Atomización [psi]", "Desviación_Presión_Atomización [psi]",
-                                        "Max_Presión_Abanico [psi]", "Promedio_Presión_Abanico [psi]",
-                                        "Promedio_SP_Presión_Abanico [psi]", "Desviación_Presión_Abanico [psi]",
+                                        "Desviacion_max_Fmasico [gr/min]", "Peso_Antes [Kg]", "Peso_Despues [kg]",
+                                        "Max_Presion_Red [psi]", "Min_Presion_Red [psi]", "Promedio_Presion_Red [psi]",
+                                        "Max_Presion_Atomizacion [psi]", "Promedio_Presion_Atomizacion [psi]",
+                                        "Promedio_SP_Presion_Atomizacion [psi]", "Desviacion_Presion_Atomizacion [psi]",
+                                        "Max_Presion_Abanico [psi]", "Promedio_Presion_Abanico [psi]",
+                                        "Promedio_SP_Presion_Abanico [psi]", "Desviacion_Presion_Abanico [psi]",
                                         "Fecha_planta"])
 
     # Inicialización de variables
@@ -459,5 +484,12 @@ def analitica_esmalte(df):
             idx += 1
 
     #print("Se han esmaltado %i piezas" % count)
+
+    # Aseguro los datos como numericos
+    float_columns = Analisis_df.columns.values.tolist()[7:30]
+    Analisis_df[float_columns] = Analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
+
+    # Guardo el analisis realizado
+    Analisis_df.to_csv('./Data/Analizadas/analisis_' + table + '_' + periodo + '.csv', index=False)
 
     return Analisis_df
