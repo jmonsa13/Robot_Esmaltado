@@ -117,7 +117,7 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
             max_var = df.iloc[idx_variable][variable]
 
         # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-        if idx_variable + 1 >= df.shape[0] - 1:
+        if idx_variable + 1 == df.shape[0] - 1:
             if df.iloc[idx_variable + 1][variable] > 0:
                 # Acumulo la data del proceso
                 tiempo_var += 1
@@ -271,39 +271,37 @@ def analitica_esmalte(df, table, periodo):
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Set point flujo masico
                     tiempo_sp_fmasico, sp_flujo_masico_total, max_sp_fmasico, flag_sp_fmasico = analisis_variable(
-                        df, idx_var,
-                        "sp_fmasico", flag_sp_fmasico, tiempo_sp_fmasico, sp_flujo_masico_total, max_sp_fmasico)
+                        df, idx_var, "sp_fmasico", flag_sp_fmasico, tiempo_sp_fmasico,
+                        sp_flujo_masico_total, max_sp_fmasico)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Presion Atomizacion
                     tiempo_patomizacion, total_patomizacion, max_patomizacion, flag_patomizacion = analisis_variable(
-                        df, idx_var,
-                        "patomizacion", flag_patomizacion, tiempo_patomizacion, total_patomizacion, max_patomizacion)
+                        df, idx_var, "patomizacion", flag_patomizacion, tiempo_patomizacion,
+                        total_patomizacion, max_patomizacion)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del  set_point -Presion Atomizacion
-                    tiempo_sp_patomizacion, total_sp_patomizacion, max_sp_patomizacion, flag_sp_patomizacion = analisis_variable(
-                        df, idx_var,
-                        "sp_patomizacion", flag_sp_patomizacion, tiempo_sp_patomizacion, total_sp_patomizacion,
-                        max_sp_patomizacion)
+                    tiempo_sp_patomizacion, total_sp_patomizacion, max_sp_patomizacion, \
+                    flag_sp_patomizacion = analisis_variable(df, idx_var, "sp_patomizacion",
+                                                             flag_sp_patomizacion, tiempo_sp_patomizacion,
+                                                             total_sp_patomizacion, max_sp_patomizacion)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Presion abanico
-                    tiempo_pabanico, total_pabanico, max_pabanico, flag_pabanico = analisis_variable(df, idx_var,
-                                                                                                          "pabanico",
-                                                                                                          flag_pabanico,
-                                                                                                          tiempo_pabanico,
-                                                                                                          total_pabanico,
-                                                                                                          max_pabanico)
+                    tiempo_pabanico, total_pabanico, max_pabanico,\
+                    flag_pabanico = analisis_variable(df, idx_var, "pabanico", flag_pabanico, tiempo_pabanico,
+                                                      total_pabanico, max_pabanico)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del  set_point -Presion abanico
-                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico, flag_sp_pabanico = analisis_variable(
-                        df, idx_var,
-                        "sp_pabanico", flag_sp_pabanico, tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico)
+                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico,\
+                    flag_sp_pabanico = analisis_variable(df, idx_var, "sp_pabanico", flag_sp_pabanico,
+                                                         tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico)
                     # --------------------------------------------------------------------------------------------
                     # --------------------------------------------------------------------------------------------
-
                     idx_var += 1
 
                     if flag_fmasico is False and flag_sp_fmasico is False and flag_patomizacion is False and \
                             flag_sp_patomizacion is False and flag_pabanico is False and flag_sp_pabanico is False:
+                        total_flag = False
+                    elif idx_var > df.shape[0]-1:
                         total_flag = False
 
                 # --------------------------------------------------------------------------------------------
