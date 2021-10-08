@@ -98,16 +98,18 @@ def find_analisis(df, robot, text_dia, redownload):
 
 def correcion_div_0(tiempo_variable, tiempo_sp_var):
     if tiempo_variable == 0:
-        tiempo_variable = tiempo_sp_var
-        if tiempo_variable == 0:
-            tiempo_variable = 1
-            tiempo_sp_var = 1
+        tiempo_variable = 0.001
+    if tiempo_sp_var == 0:
+        tiempo_sp_var = 0.001
 
     return tiempo_variable, tiempo_sp_var
 
 
-def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_var, max_var):
+def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_var, max_var, aux):
     if df.iloc[idx_variable][variable] > 0 and flag_var is True:
+        # Existen datos, cambio aux a 1
+        aux = 1
+
         # Acumulo la data del proceso
         tiempo_var += 1
         total_var += df.iloc[idx_variable][variable]
@@ -116,30 +118,16 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
         if max_var < df.iloc[idx_variable][variable]:
             max_var = df.iloc[idx_variable][variable]
 
-        # Por si el df finaliza o inicia con el estado 1, es decir que se corto el proceso
-        if idx_variable + 1 == df.shape[0] - 1:
-            if df.iloc[idx_variable + 1][variable] > 0:
-                # Acumulo la data del proceso
-                tiempo_var += 1
-                total_var += df.iloc[idx_variable][variable]
-
-                # Maximo de la bariable
-                if max_var < df.iloc[idx_variable][variable]:
-                    max_var = df.iloc[idx_variable][variable]
-
-            # Flag para no volver a entrar
-            flag_var = False
-
+        # Metodo para identificar que el proceso finalizo
     elif df.iloc[idx_variable - 1][variable] > 0 and df.iloc[idx_variable][variable] == 0 and flag_var is True:
+        # Evito error de desborde
         if idx_variable + 1 > df.shape[0] - 1:
-            # Flag para no volver a entrar
             flag_var = False
         else:
             if df.iloc[idx_variable + 1][variable] == 0:
-                # Flag para no volver a entrar
                 flag_var = False
 
-    return tiempo_var, total_var, max_var, flag_var
+    return tiempo_var, total_var, max_var, flag_var, aux
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
@@ -148,7 +136,7 @@ def analitica_esmalte(df, table, periodo):
     Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado
     """
     # Inicialización del DF
-    Analisis_df = pd.DataFrame(columns=["Fecha", "Dia", "Turno", "Hora", "Robot", "Proceso_Completo",
+    analisis_df = pd.DataFrame(columns=["Fecha", "Dia", "Turno", "Hora", "Robot", "Proceso_Completo",
                                         "Referencia", "Tiempo_Estado [s]", "Tiempo_Esmaltado [s]",
                                         "Tiempo_Esmaltado_SP [s]",
                                         "Esmalte_Usado [Kg]", "Esmalte_Usado_SP [Kg]", "Diff_Esmalte [gr]",
@@ -165,13 +153,11 @@ def analitica_esmalte(df, table, periodo):
     # Inicialización de variables
     count = 0
     idx = 0
-    pre = 3
 
     # Mensaje de control
     print("Inicio proceso de analisis de la información")
 
     while idx < df.shape[0]:
-
         # -------------------------------------------------------------------------------
         # Inicializacion varibles
         # -------------------------------------------------------------------------------
@@ -188,6 +174,8 @@ def analitica_esmalte(df, table, periodo):
         flujo_masico_total = 0
         max_flujo_masico = 0
         desv_flujo_masico_max = 0
+        aux_fm = 0
+        aux_sfm = 0
 
         sp_flujo_masico_total = 0
         max_sp_fmasico = 0
@@ -201,6 +189,11 @@ def analitica_esmalte(df, table, periodo):
         total_sp_pabanico = 0
         total_patomizacion = 0
         total_sp_patomizacion = 0
+
+        aux_pat = 0
+        aux_spat = 0
+        aux_pab = 0
+        aux_spab = 0
 
         max_patomizacion = 0
         max_sp_patomizacion = 0
@@ -222,7 +215,6 @@ def analitica_esmalte(df, table, periodo):
         # ESTADO ENCENDIDO
         # -------------------------------------------------------------------------------
         if df.iloc[idx]['estado'] == 1:
-
             # Guardo la fecha de inicio del esmaltado, la referencia y el robot
             fecha_ini = df.index[idx].date()
             fecha_proceso = df.iloc[idx]["fecha_planta"].date()
@@ -242,14 +234,12 @@ def analitica_esmalte(df, table, periodo):
             Min_Pred = df.iloc[idx]["presion_red"]
 
             # Mensajes de control
-            print(fecha_proceso)
-            print(hora)
+            print(robot, fecha_proceso, hora)
             # --------------------------------------------------------------------------------------------
             # Recorro el proceso mientras el estado sea activo
             while df.iloc[idx]['estado'] == 1:
                 # Cuento el tiempo que estado permanecio on
                 tiempo_estado += 1
-
                 # --------------------------------------------------------------------------------------------
                 # Calcular LA PRESION DE RED
                 if Max_Pred < df.iloc[idx]["presion_red"]:
@@ -259,51 +249,66 @@ def analitica_esmalte(df, table, periodo):
                     Min_Pred = df.iloc[idx]["presion_red"]
 
                 Total_Pred += df.iloc[idx]["presion_red"]
-
                 # --------------------------------------------------------------------------------------------
                 idx_var = idx
                 while total_flag is True:
                     # --------------------------------------------------------------------------------------------
                     # Conteo del flujo masico
-                    tiempo_fmasico, flujo_masico_total, max_flujo_masico,\
-                    flag_fmasico = analisis_variable(df, idx_var, "fmasico", flag_fmasico,  tiempo_fmasico,
-                                                     flujo_masico_total,  max_flujo_masico)
+                    tiempo_fmasico, flujo_masico_total, max_flujo_masico, flag_fmasico, aux_fm = analisis_variable(
+                        df, idx_var, "fmasico", flag_fmasico, tiempo_fmasico, flujo_masico_total,
+                        max_flujo_masico, aux_fm)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Set point flujo masico
-                    tiempo_sp_fmasico, sp_flujo_masico_total, max_sp_fmasico, flag_sp_fmasico = analisis_variable(
-                        df, idx_var, "sp_fmasico", flag_sp_fmasico, tiempo_sp_fmasico,
-                        sp_flujo_masico_total, max_sp_fmasico)
+                    tiempo_sp_fmasico, sp_flujo_masico_total, max_sp_fmasico, flag_sp_fmasico, \
+                    aux_sfm = analisis_variable(df, idx_var, "sp_fmasico", flag_sp_fmasico, tiempo_sp_fmasico,
+                                                sp_flujo_masico_total, max_sp_fmasico, aux_sfm)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Presion Atomizacion
-                    tiempo_patomizacion, total_patomizacion, max_patomizacion, flag_patomizacion = analisis_variable(
-                        df, idx_var, "patomizacion", flag_patomizacion, tiempo_patomizacion,
-                        total_patomizacion, max_patomizacion)
+                    tiempo_patomizacion, total_patomizacion, max_patomizacion, flag_patomizacion, \
+                    aux_pat = analisis_variable(df, idx_var, "patomizacion", flag_patomizacion, tiempo_patomizacion,
+                                                total_patomizacion, max_patomizacion, aux_pat)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del  set_point -Presion Atomizacion
                     tiempo_sp_patomizacion, total_sp_patomizacion, max_sp_patomizacion, \
-                    flag_sp_patomizacion = analisis_variable(df, idx_var, "sp_patomizacion",
-                                                             flag_sp_patomizacion, tiempo_sp_patomizacion,
-                                                             total_sp_patomizacion, max_sp_patomizacion)
+                    flag_sp_patomizacion, aux_spat = analisis_variable(df, idx_var, "sp_patomizacion",
+                                                                       flag_sp_patomizacion, tiempo_sp_patomizacion,
+                                                                       total_sp_patomizacion, max_sp_patomizacion,
+                                                                       aux_spat)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Presion abanico
-                    tiempo_pabanico, total_pabanico, max_pabanico,\
-                    flag_pabanico = analisis_variable(df, idx_var, "pabanico", flag_pabanico, tiempo_pabanico,
-                                                      total_pabanico, max_pabanico)
+                    tiempo_pabanico, total_pabanico, max_pabanico, flag_pabanico, \
+                    aux_pab = analisis_variable(df, idx_var, "pabanico", flag_pabanico,  tiempo_pabanico,
+                                                total_pabanico, max_pabanico,  aux_pab)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del  set_point -Presion abanico
-                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico,\
-                    flag_sp_pabanico = analisis_variable(df, idx_var, "sp_pabanico", flag_sp_pabanico,
-                                                         tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico)
+                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico, flag_sp_pabanico,\
+                    aux_spab = analisis_variable(df, idx_var, "sp_pabanico", flag_sp_pabanico, tiempo_sp_pabanico,
+                                                 total_sp_pabanico, max_sp_pabanico, aux_spab)
                     # --------------------------------------------------------------------------------------------
                     # --------------------------------------------------------------------------------------------
-                    idx_var += 1
+                    # Por si nunca empiezan los procesos durante el tiempo de estado on
+                    if df.iloc[idx_var]['estado'] == 0:
+                        if aux_fm == 0:
+                            flag_fmasico = False
+                        if aux_sfm == 0:
+                            flag_sp_fmasico = False
+                        if aux_pat == 0:
+                            flag_patomizacion = False
+                        if aux_spat == 0:
+                            flag_sp_patomizacion = False
+                        if aux_pab == 0:
+                            flag_pabanico = False
+                        if aux_spab == 0:
+                            flag_sp_pabanico = False
 
+                     # Logica para salir del while
                     if flag_fmasico is False and flag_sp_fmasico is False and flag_patomizacion is False and \
                             flag_sp_patomizacion is False and flag_pabanico is False and flag_sp_pabanico is False:
                         total_flag = False
-                    elif idx_var > df.shape[0]-1:
+                    elif idx_var == df.shape[0] - 1:
                         total_flag = False
 
+                    idx_var += 1
                 # --------------------------------------------------------------------------------------------
                 # Avanzo en el df
                 idx += 1
@@ -321,7 +326,6 @@ def analitica_esmalte(df, table, periodo):
 
             flujo_masico_total = flujo_masico_total / 60 / 1000
             sp_flujo_masico_total = sp_flujo_masico_total / 60 / 1000
-
             # ----------------------------------------------------------------------------------------------------------
             # Evitando la division por cero cuando el estado esta ON pero no sale flujo ni presión
             # ----------------------------------------------------------------------------------------------------------
@@ -333,7 +337,7 @@ def analitica_esmalte(df, table, periodo):
             # -------------------------------------------------------------------------------------------------------------
             desv_flujo_masico_max = max_flujo_masico - (((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico) * 60)
 
-            Analisis_df.loc[count] = [fecha_ini, ndia, turno, hora, robot, float(flag_comp),
+            analisis_df.loc[count] = [fecha_ini, ndia, turno, hora, robot, float(flag_comp),
                                       referencia_esmaltada, float(tiempo_estado),
                                       float(tiempo_fmasico), float(tiempo_sp_fmasico),
                                       round_np(flujo_masico_total), round_np(sp_flujo_masico_total),
@@ -360,11 +364,14 @@ def analitica_esmalte(df, table, periodo):
             # Avanzo en el df
             idx += 1
 
+    # Mensajes de control
+    print("Finalizo correctamente")
+
     # Aseguro los datos como numericos
-    float_columns = Analisis_df.columns.values.tolist()[7:30]
-    Analisis_df[float_columns] = Analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
+    float_columns = analisis_df.columns.values.tolist()[7:30]
+    analisis_df[float_columns] = analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
 
     # Guardo el analisis realizado
-    Analisis_df.to_csv('./Data/Analizadas/analisis_' + table + '_' + periodo + '.csv', index=False)
+    analisis_df.to_csv('./Data/Analizadas/analisis_' + table + '_' + periodo + '.csv', index=False)
 
-    return Analisis_df
+    return analisis_df
