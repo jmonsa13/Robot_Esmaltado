@@ -78,7 +78,7 @@ if page == "Celula de Esmaltado":
         flag_download = False
         if st.checkbox("Descargar nuevamente"):
             flag_download = True
-            st.caching.clear_cache()
+            st.legacy_caching.clear_cache()
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Conexión a la base de datos SQL, descarga y grafica
