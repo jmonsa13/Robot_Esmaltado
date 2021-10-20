@@ -320,7 +320,7 @@ def analitica_esmalte(df, table, periodo):
                           "El proceso no ha finalizado!\n")
                     break  # Salir del ciclo para evitar un error
                 elif idx - 1 == 0:
-                    flag_comp = 0
+                    flag_comp = -1
                     print("¡NO SE TIENEN DATOS SUFICIENTE DE LA PRIMERA PIEZA ESMALTADA: "
                           "El proceso no ha finalizado!\n")
 

@@ -3,6 +3,7 @@
 # 21-September-2021
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
+import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
@@ -46,9 +47,7 @@ def plot_line(df, title, ytitle, flag=False, limit=700):
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
-    fig.update_xaxes(
-        dtick="d0.5",
-        tickformat="%b %d\n%Y")
+    fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
 
     fig.update_layout(legend=dict(
         orientation="h",
@@ -78,7 +77,7 @@ def plot_bar(df, title, ytitle):
     for elem in iter_colum:
         fig.add_trace(go.Bar(
             x=df["Fecha_planta"],
-            y=df[int(elem)],
+            y=df[elem],
             # text=df[int(elem)],textposition='auto',
             name=elem))
 
@@ -92,6 +91,39 @@ def plot_bar(df, title, ytitle):
     fig['layout']['yaxis']['title'] = ytitle
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
+
+    return fig
+
+
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+def plot_bar_turno(df, title, ytitle):
+    """
+    Funcion para dibujar el bar plot con los datos de las tablas dinamicas
+    INPUT:
+        df = pandas dataframe pivoteado.
+        title =  Titulo de la grafica
+        ytitle =  Titulo del ejey
+    OUTPUT:
+        fig = objeto figura para dibujarlo externamente de la función
+    """
+    df["Turno"] = df["Turno"].astype(str)
+
+    fig = px.bar(df, x="Fecha_planta", y="Cantidad", color="Turno")
+
+    # Here we modify the tickangle of the xaxis, resulting in rotated labels.
+    fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=0)
+    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
+    fig.update_layout(template="seaborn", title=title)
+
+    # Set x-axis and y-axis title
+    fig['layout']['xaxis']['title'] = 'Fecha Planta'
+    fig['layout']['yaxis']['title'] = ytitle
+
+    fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+
+    fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
 
     return fig
 
