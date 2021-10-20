@@ -11,6 +11,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
+from st_aggrid import AgGrid, GridOptionsBuilder
+
+
 from pivottablejs import pivot_ui
 
 # Internal Function
@@ -397,23 +400,30 @@ if page == "Online":
     st.header("En construcción - Ventana para ver el estado en vivo")
 
     # Placeholder definition
-    placeholder = st.empty()
     start_button = st.empty()
+    placeholder = st.empty()
+
     # Current day
     sel_dia = datetime.date.today()
 
-    if start_button.button('Ver en vivo', key='start'):
+    if start_button.button('Ver en Vivo', key='start'):
+        with st.expander("Ver analisis del proceso"):
+            text1_holder = st.empty()
+            r1_holder = st.empty()
+            text2_holder = st.empty()
+            r2_holder = st.empty()
 
         # Variables initialization
         start_button.empty()
         live_pd_r1 = pd.DataFrame()
         live_pd_r2 = pd.DataFrame()
-        initial_time = 60
-        orig_size_1 = 10 * initial_time
+        initial_time = 10
+        orig_size_1 = 60 * initial_time
+        cont = 0
 
         # Initial plot
         # start_time = time.time()
-        live_pd_r1, live_pd_r2, fig1 = sql_plot_live(time=10 * initial_time, day=str(sel_dia))
+        live_pd_r1, live_pd_r2, fig1 = sql_plot_live(time=60 * initial_time, day=str(sel_dia))
         placeholder.plotly_chart(fig1, use_container_width=True)
         # print("---initial_plot %s seconds ---" % (time.time() - start_time))
 
@@ -447,9 +457,31 @@ if page == "Online":
             fig = plot_html_all(live_pd_r1, live_pd_r2, title)
             placeholder.plotly_chart(fig, use_container_width=True)
             # print("---plot %s seconds ---" % (time.time() - start_time))
+            # ----------------------------------------------------------------------------------------------------------
+            # Analisis en tiempo real
+            start_time = time.time()
+            Analisis_r1 = find_analisis(df=live_pd_r1, robot="robot1", text_dia="En Vivo", redownload=True)
+            Analisis_r2 = find_analisis(df=live_pd_r2, robot="robot2", text_dia="En Vivo", redownload=True)
+            #Analisis_live = pd.concat([Analisis_r1, Analisis_r2])
+            print("---Analisis %s seconds ---" % (time.time() - start_time))
+
+            # Visualizando la tabla
+            # Robot 1
+            text1_holder.markdown("**Información Robot 1**")
+            with r1_holder:
+                visual_tabla_dinam(Analisis_r1, "r1" + str(cont))
+
+            # Robot 2
+            text2_holder.markdown("**Información Robot 2**")
+            with r2_holder:
+                visual_tabla_dinam(Analisis_r2, "r2" + str(cont))
+            # Aumento contador para variar el key de la visualización
+            cont += 1
 
             # Wait x seconds before updating
             time.sleep(30)
+            print(cont)
+            st.legacy_caching.clear_cache()
 
 # ----------------------------------------------------------------------------------------------------------------------
 st.sidebar.header("Acerca de la App")

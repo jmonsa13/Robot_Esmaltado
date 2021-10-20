@@ -118,7 +118,7 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
         if max_var < df.iloc[idx_variable][variable]:
             max_var = df.iloc[idx_variable][variable]
 
-        # Metodo para identificar que el proceso finalizo
+    # Metodo para identificar que el proceso finalizo
     elif df.iloc[idx_variable - 1][variable] > 0 and df.iloc[idx_variable][variable] == 0 and flag_var is True:
         # Evito error de desborde
         if idx_variable + 1 > df.shape[0] - 1:
