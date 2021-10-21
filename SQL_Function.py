@@ -3,9 +3,8 @@
 # 21-September-2021
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
-import os
-import calendar as cl
 import datetime
+import os
 
 import pandas as pd
 import pyodbc
@@ -14,9 +13,8 @@ import streamlit as st
 from Plot_Function import plot_html, plot_html_all
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
-
-
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=False)
+# @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=False, ttl=24*3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def load_data(folder="./Data/Raw/", filename="tabla_robot1_2021_04_22_1012.csv"):
     """
     Función que carga el archivo csv guardado al conectar con la base de datos y devuelve un dataframe
@@ -61,7 +59,6 @@ def fecha_format(df):
 
     return df
 
-
 def add_day(day, add=1):
     """
     Función agrega o quita dias, teniendo en cuenta inicio de mes e inicio de año
@@ -78,7 +75,8 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def find_load(tipo, day, ini, database, table, redownload):
     """
     Función que busca y carga el archivo de datos si este ya ha sido descargado.
@@ -125,7 +123,8 @@ def find_load(tipo, day, ini, database, table, redownload):
     return pd_sql
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
                 table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
     """
@@ -188,7 +187,7 @@ def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='rob
     return pd_sql
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1",
              redownload=False):
     """
@@ -223,7 +222,7 @@ def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', 
     return df, fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=False):
     """
     Función que se conecta a la base de datos de ambos robots y crea el archivo de visualización a la vez que lo guarda

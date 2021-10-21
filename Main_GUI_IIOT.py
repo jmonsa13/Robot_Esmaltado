@@ -11,8 +11,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
-from st_aggrid import AgGrid, GridOptionsBuilder
-
+from st_aggrid import AgGrid
 
 from pivottablejs import pivot_ui
 
@@ -147,7 +146,7 @@ if page == "Celula de Esmaltado":
             # Solo reporto los procesos que finalizaron el día que estoy contando.
             Analisis_df = Analisis_df[(Analisis_df["Proceso_Completo"] == 1) | (Analisis_df["Proceso_Completo"] == -1)]
 
-            if st.checkbox("Reportes Pre-Establecidos"):
+            with st.expander("Ver reportes piezas fabricadas y esmalte consumido"):
                 # ------------------------------------------------------------------------------------------------------
                 # Tablas dinamicas de cantidad de piezas
                 cantidad_piezas = Analisis_df.pivot_table(index=["Fecha_planta", "Robot", "Turno"],
@@ -178,7 +177,7 @@ if page == "Celula de Esmaltado":
                 st.markdown("**Horas Totales Trabajadas**")
                 st.write("Cantidad de Horas activas de la maquina por referencía, día, robot y turno.")
                 horas_piezas = horas_piezas.reset_index()
-                horas_piezas.columns = list(map(str,horas_piezas.columns.values.tolist()))
+                horas_piezas.columns = list(map(str, horas_piezas.columns.values.tolist()))
 
                 # Visualizando la tabla
                 visual_tabla_dinam(horas_piezas.round(2), "horas_piezas")
@@ -204,135 +203,134 @@ if page == "Celula de Esmaltado":
                 visual_tabla_dinam(esmalte_cons.round(2), "esmalte_cons")
                 # ------------------------------------------------------------------------------------------------------
                 # Graficas de los reportes generados
-                with st.expander("Ver graficas"):
-                    st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido por Robot, Referencia y Día**")
+                #with st.expander("Ver graficas"):
+                st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido por Robot, Referencia y Día**")
 
-                    p1, p2 = st.columns(2)
+                p1, p2 = st.columns(2)
 
-                    # Filtrado y selección
-                    sel_rob0 = p1.selectbox("¿Que robot desea analizar?", ["Ambos"] +
-                                            list(cantidad_piezas["Robot"].unique()), 0, key="rob00")
+                # Filtrado y selección
+                sel_rob0 = p1.selectbox("¿Que robot desea analizar?", ["Ambos"] +
+                                        list(cantidad_piezas["Robot"].unique()), 0, key="rob00")
 
-                    sel_turno = p2.selectbox("¿Que turno desea analizar?", ["Día Completo"] +
-                                             list(cantidad_piezas["Turno"].unique()), 0, key="Turno")
+                sel_turno = p2.selectbox("¿Que turno desea analizar?", ["Día Completo"] +
+                                         list(cantidad_piezas["Turno"].unique()), 0, key="Turno")
 
-                    # Filtrado por el turno y el robot
-                    if sel_turno == "Día Completo":
-                        # Sin información de turnos
-                        if sel_rob0 != "Ambos":
-                            cantidad_piezas_filt = cantidad_piezas_grap[cantidad_piezas_grap["Robot"] == sel_rob0]
-                            esmalte_cons_filt = esmalte_cons_grap[esmalte_cons_grap["Robot"] == sel_rob0]
-                        else:
-                            cantidad_piezas_filt = cantidad_piezas_grap.copy()
-                            esmalte_cons_filt = esmalte_cons_grap.copy()
+                # Filtrado por el turno y el robot
+                if sel_turno == "Día Completo":
+                    # Sin información de turnos
+                    if sel_rob0 != "Ambos":
+                        cantidad_piezas_filt = cantidad_piezas_grap[cantidad_piezas_grap["Robot"] == sel_rob0]
+                        esmalte_cons_filt = esmalte_cons_grap[esmalte_cons_grap["Robot"] == sel_rob0]
                     else:
-                        # Con información de turno
-                        cantidad_piezas_turno = cantidad_piezas[cantidad_piezas["Turno"] == sel_turno]
-                        esmalte_cons_turno = esmalte_cons[esmalte_cons["Turno"] == sel_turno]
+                        cantidad_piezas_filt = cantidad_piezas_grap.copy()
+                        esmalte_cons_filt = esmalte_cons_grap.copy()
+                else:
+                    # Con información de turno
+                    cantidad_piezas_turno = cantidad_piezas[cantidad_piezas["Turno"] == sel_turno]
+                    esmalte_cons_turno = esmalte_cons[esmalte_cons["Turno"] == sel_turno]
 
-                        cantidad_piezas_turno.drop("Turno", inplace=True, axis=1)
-                        esmalte_cons_turno.drop("Turno", inplace=True, axis=1)
+                    cantidad_piezas_turno.drop("Turno", inplace=True, axis=1)
+                    esmalte_cons_turno.drop("Turno", inplace=True, axis=1)
 
-                        if sel_rob0 != "Ambos":
-                            cantidad_piezas_filt = cantidad_piezas_turno[cantidad_piezas_turno["Robot"] == sel_rob0]
-                            esmalte_cons_filt = esmalte_cons_turno[esmalte_cons_turno["Robot"] == sel_rob0]
-                        else:
-                            cantidad_piezas_filt = cantidad_piezas_turno.copy()
-                            esmalte_cons_filt = esmalte_cons_turno.copy()
-                    # -------------------------------------Plotly-------------------------------------------------------
-                    # Cantidad de piezas esmaltadas
-                    fig = plot_bar(df=cantidad_piezas_filt, title="Cantidad de Piezas Esmaltadas",
-                                   ytitle='Piezas Esmaltadas')
+                    if sel_rob0 != "Ambos":
+                        cantidad_piezas_filt = cantidad_piezas_turno[cantidad_piezas_turno["Robot"] == sel_rob0]
+                        esmalte_cons_filt = esmalte_cons_turno[esmalte_cons_turno["Robot"] == sel_rob0]
+                    else:
+                        cantidad_piezas_filt = cantidad_piezas_turno.copy()
+                        esmalte_cons_filt = esmalte_cons_turno.copy()
+                # -------------------------------------Plotly-------------------------------------------------------
+                # Cantidad de piezas esmaltadas
+                fig = plot_bar(df=cantidad_piezas_filt, title="Cantidad de Piezas Esmaltadas",
+                               ytitle='Piezas Esmaltadas')
 
-                    p1.plotly_chart(fig, use_container_width=True)
-                    # -------------------------------------Plotly-------------------------------------------------------
-                    # Cantidad de esmalte usado
-                    fig = plot_bar(df=esmalte_cons_filt, title="Esmalte Consumido por Referencia",
-                                   ytitle='Esmalte Consumido [Kg]')
+                p1.plotly_chart(fig, use_container_width=True)
+                # -------------------------------------Plotly-------------------------------------------------------
+                # Cantidad de esmalte usado
+                fig = plot_bar(df=esmalte_cons_filt, title="Esmalte Consumido por Referencia",
+                               ytitle='Esmalte Consumido [Kg]')
 
-                    p2.plotly_chart(fig, use_container_width=True)
-                    #--------------------------------------------------------------------------------------------------
-                    # Reporte grafico por turno
-                    #--------------------------------------------------------------------------------------------------
-                    # Filtrado y selección
-                    st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido por Turno en Cada Día**")
-                    sel_rob1 = st.selectbox("¿Que robot desea analizar?", list(cantidad_piezas["Robot"].unique()),
-                                            0, key="rob01")
-                    #--------------------------------------------------------------------------------------------------
-                    # Cantidad de Piezas Esmaltadas
-                    # Filtro el DF por la selección realizada
-                    cantidad_piezas_filt2 = cantidad_piezas[cantidad_piezas["Robot"] == sel_rob1]
+                p2.plotly_chart(fig, use_container_width=True)
+                #--------------------------------------------------------------------------------------------------
+                # Reporte grafico por turno
+                #--------------------------------------------------------------------------------------------------
+                # Filtrado y selección
+                st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido por Turno en Cada Día**")
+                sel_rob1 = st.selectbox("¿Que robot desea analizar?", list(cantidad_piezas["Robot"].unique()),
+                                        0, key="rob01")
+                #--------------------------------------------------------------------------------------------------
+                # Cantidad de Piezas Esmaltadas
+                # Filtro el DF por la selección realizada
+                cantidad_piezas_filt2 = cantidad_piezas[cantidad_piezas["Robot"] == sel_rob1]
 
-                    # Organizo la data para poderla dibujar
-                    df_turno = pd.melt(frame=cantidad_piezas_filt2, id_vars=["Fecha_planta", "Robot", "Turno"],
-                                   var_name="Referencia", value_name="Cantidad")
+                # Organizo la data para poderla dibujar
+                df_turno = pd.melt(frame=cantidad_piezas_filt2, id_vars=["Fecha_planta", "Robot", "Turno"],
+                               var_name="Referencia", value_name="Cantidad")
 
-                    df_turno = df_turno.groupby(["Fecha_planta", "Robot", "Turno"]).sum().reset_index()
+                df_turno = df_turno.groupby(["Fecha_planta", "Robot", "Turno"]).sum().reset_index()
 
-                    ppp1, ppp2 = st.columns(2)
-                    # -------------------------------------Plotly-------------------------------------------------------
-                    # Cantidad de piezas esmaltadas
-                    fig = plot_bar_turno(df=df_turno, title="Cantidad Piezas Esmaltadas por Día y Turno",
-                                         ytitle='Cantidad Piezas Esmaltadas')
-                    ppp1.plotly_chart(fig, use_container_width=True)
-                    #--------------------------------------------------------------------------------------------------
-                    # Cantidad de Esmalte usado
-                    # Filtro el DF por la selección realizada
-                    esmalte_cons_filt2 = esmalte_cons[esmalte_cons["Robot"] == sel_rob1]
+                ppp1, ppp2 = st.columns(2)
+                # -------------------------------------Plotly-------------------------------------------------------
+                # Cantidad de piezas esmaltadas
+                fig = plot_bar_turno(df=df_turno, title="Cantidad Piezas Esmaltadas por Día y Turno",
+                                     ytitle='Cantidad Piezas Esmaltadas')
+                ppp1.plotly_chart(fig, use_container_width=True)
+                #--------------------------------------------------------------------------------------------------
+                # Cantidad de Esmalte usado
+                # Filtro el DF por la selección realizada
+                esmalte_cons_filt2 = esmalte_cons[esmalte_cons["Robot"] == sel_rob1]
 
-                    # Organizo la data para poderla dibujar
-                    df_turno = pd.melt(frame=esmalte_cons_filt2, id_vars=["Fecha_planta", "Robot", "Turno"],
-                                   var_name="Referencia", value_name="Cantidad")
+                # Organizo la data para poderla dibujar
+                df_turno = pd.melt(frame=esmalte_cons_filt2, id_vars=["Fecha_planta", "Robot", "Turno"],
+                               var_name="Referencia", value_name="Cantidad")
 
-                    df_turno = df_turno.groupby(["Fecha_planta", "Robot", "Turno"]).sum().reset_index()
-                    # -------------------------------------Plotly-------------------------------------------------------
-                    # Cantidad de piezas esmaltadas
-                    fig = plot_bar_turno(df=df_turno, title="Cantidad Esmalte Consumido por Día y Turno",
-                                         ytitle='Esmalte Consumido [Kg]')
-                    ppp2.plotly_chart(fig, use_container_width=True)
-                    # --------------------------------------------------------------------------------------------------
-                    # --------------------------------------------------------------------------------------------------
-                    st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido Total por Día**")
-                    st.markdown("Solo las referencias de productos")
+                df_turno = df_turno.groupby(["Fecha_planta", "Robot", "Turno"]).sum().reset_index()
+                # -------------------------------------Plotly-------------------------------------------------------
+                # Cantidad de piezas esmaltadas
+                fig = plot_bar_turno(df=df_turno, title="Cantidad Esmalte Consumido por Día y Turno",
+                                     ytitle='Esmalte Consumido [Kg]')
+                ppp2.plotly_chart(fig, use_container_width=True)
+                # --------------------------------------------------------------------------------------------------
+                # --------------------------------------------------------------------------------------------------
+                st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido Total por Día**")
+                st.markdown("Solo las referencias de productos")
 
-                    pp1, pp2 = st.columns(2)
+                pp1, pp2 = st.columns(2)
 
-                    # Grafica de total de piezas fabricadas por día objetivo de 700 piezas
-                    # ME QUEDO SOLO CON LAS REFERENCIAS REALES DEL PROCESO
-                    error_list = [0, 101, 126]
+                # Grafica de total de piezas fabricadas por día objetivo de 700 piezas
+                # ME QUEDO SOLO CON LAS REFERENCIAS REALES DEL PROCESO
+                error_list = [0, 101, 126]
 
-                    cantidad_piezas_grap = cantidad_piezas_grap.loc[:, ~cantidad_piezas_grap.columns.isin(error_list)]
-                    sum_cantidad = sum_procesos(cantidad_piezas_grap, "Piezas Esmaltadas")
+                cantidad_piezas_grap = cantidad_piezas_grap.loc[:, ~cantidad_piezas_grap.columns.isin(error_list)]
+                sum_cantidad = sum_procesos(cantidad_piezas_grap, "Piezas Esmaltadas")
 
-                    # -------------------------------------Plotly-------------------------------------------------------
-                    fig = plot_line(sum_cantidad, "Piezas Esmaltadas por Robot", "Piezas Esmaltadas [Und]", flag=True)
-                    pp1.plotly_chart(fig, use_container_width=True)
-                    #--------------------------------------------------------------------------------------------------
-                    # Sumo el esmalte total en ambos o solo 1 robot
-                    esmalte_cons_grap = esmalte_cons_grap.loc[:, ~esmalte_cons_grap.columns.isin(error_list)]
-                    sum_esmalte = sum_procesos(esmalte_cons_grap, "Esmalte Usado")
+                # -------------------------------------Plotly-------------------------------------------------------
+                fig = plot_line(sum_cantidad, "Piezas Esmaltadas por Robot", "Piezas Esmaltadas [Und]", flag=True)
+                pp1.plotly_chart(fig, use_container_width=True)
+                #--------------------------------------------------------------------------------------------------
+                # Sumo el esmalte total en ambos o solo 1 robot
+                esmalte_cons_grap = esmalte_cons_grap.loc[:, ~esmalte_cons_grap.columns.isin(error_list)]
+                sum_esmalte = sum_procesos(esmalte_cons_grap, "Esmalte Usado")
 
-                    x_column = sum_esmalte.columns.values.tolist()[1:]
-                    sum_esmalte["Total"] = 0
-                    for i in x_column:
-                        if i != "Total":
-                            sum_esmalte["Total"] += sum_esmalte[i]
+                x_column = sum_esmalte.columns.values.tolist()[1:]
+                sum_esmalte["Total"] = 0
+                for i in x_column:
+                    if i != "Total":
+                        sum_esmalte["Total"] += sum_esmalte[i]
 
-                    # PLOTLY
-                    fig = plot_line(sum_esmalte, "Esmalte Usado por Robot y Total", "Esmalte Usado [Kg]")
-                    pp2.plotly_chart(fig, use_container_width=True)
-            # ----------------------------------------------------------------------------------------------------------
-            # Programa para reporte manual de tablas dinamicas usando pivot_ui
-            if st.checkbox("Reporte Manual"):
-                t = pivot_ui(Analisis_df)
-                with open(t.src) as t:
-                    components.html(t.read(), width=1200, height=600, scrolling=True)
+                # PLOTLY
+                fig = plot_line(sum_esmalte, "Esmalte Usado por Robot y Total", "Esmalte Usado [Kg]")
+                pp2.plotly_chart(fig, use_container_width=True)
+                # ------------------------------------------------------------------------------------------------------
+                # Programa para reporte manual de tablas dinamicas usando pivot_ui
+                if st.checkbox("Reporte Manual"):
+                    t = pivot_ui(Analisis_df)
+                    with open(t.src) as t:
+                        components.html(t.read(), width=1200, height=600, scrolling=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
             # Analisis de la dispersión de esmaltado
             st.subheader("5. Dispersión Esmaltado")
-
-            if st.checkbox("Dispersión Esmaltado"):
+            with st.expander("Ver dispersión esmaltado"):
                 # Dispersión del esmalte usado
                 st.markdown("**Dispersión Esmaltado en el Tiempo**")
                 sss1, sss2 = st.columns((3,1))
@@ -341,7 +339,6 @@ if page == "Celula de Esmaltado":
                 rob = Analisis_df["Robot"].unique()
                 sel_rob = sss2.selectbox("¿Que robot desea analizar?", rob, 0, key="rob0")
                 data = Analisis_df[Analisis_df["Robot"] == sel_rob]
-
                 # -------------------------------------Plotly-----------------------------------------------------------
                 # Grafica de dispersion del esmalte usado
                 fig = px.box(data, x="Fecha_planta", y="Esmalte_Usado [Kg]", color="Referencia",template="seaborn",
@@ -373,7 +370,6 @@ if page == "Celula de Esmaltado":
 
                 # Fitrado solo procesos completos
                 report_df1 = Analisis_df[Analisis_df["Fecha_planta"].isin(selec_dt1)]
-
                 # -------------------------------------Plotly-----------------------------------------------------------
                 # Grafica de dispersión del esmalte
                 fig = go.Figure()

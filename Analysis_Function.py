@@ -9,12 +9,9 @@ import os
 import numpy as np
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder
+from st_aggrid import AgGrid
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
-
-
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
 def sum_procesos(df, name):
     """
     Función para sumar los valores de las tablas dinamicas generadas por fecha
@@ -37,7 +34,8 @@ def sum_procesos(df, name):
     for i, elem in enumerate(df["Fecha_planta"].unique()):
         sum_df.loc[sum_df.index[i], 'Fecha_planta'] = elem
         for j, rob in enumerate(df["Robot"].unique()):
-            sum_df.loc[sum_df.index[i], name_list[j]] = df[(df["Fecha_planta"] == elem) & (df["Robot"] == rob)][colum_name].sum().sum()
+            sum_df.loc[sum_df.index[i], name_list[j]] = df[(df["Fecha_planta"] == elem) &
+                                                           (df["Robot"] == rob)][colum_name].sum().sum()
 
     return sum_df
 
@@ -51,27 +49,25 @@ def visual_tabla_dinam(df, key):
 
     """
     # Definiendo la tabla de visualización
-    gb = GridOptionsBuilder.from_dataframe(df)
-
-    gb.configure_side_bar()
-    gridoptions = gb.build()
+    # gb = GridOptionsBuilder.from_dataframe(df)
+    # gb.configure_side_bar()
+    # gridoptions = gb.build()
 
     AgGrid(df, editable=False, sortable=True, filter=True, resizable=True, defaultWidth=5,
            fit_columns_on_grid_load=False, theme="streamlit",  # "light", "dark", "blue", "material"
-           key=key, reload_data=True,
-           gridOptions=gridoptions, enable_enterprise_modules=True)
+           key=key, reload_data=True,  # gridOptions=gridoptions,
+           enable_enterprise_modules=True)
     return
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
 def round_np(x):
     """
     Función que redondea una cifra
     """
     return np.round(x, 3)
 
-
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def find_analisis(df, robot, text_dia, redownload):
     """
     Función que busca y carga el archivo de datos si este ya ha sido descargado.
@@ -130,7 +126,8 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
     return tiempo_var, total_var, max_var, flag_var, aux
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def analitica_esmalte(df, table, periodo):
     """
     Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado

@@ -9,9 +9,7 @@ import streamlit as st
 from plotly.subplots import make_subplots
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
-
-
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def plot_line(df, title, ytitle, flag=False, limit=700):
     """
     Funcion para dibujar las lines plot con los datos totales dia a dia de cada robot
@@ -60,7 +58,7 @@ def plot_line(df, title, ytitle, flag=False, limit=700):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def plot_bar(df, title, ytitle):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
@@ -96,7 +94,7 @@ def plot_bar(df, title, ytitle):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def plot_bar_turno(df, title, ytitle):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
@@ -128,7 +126,7 @@ def plot_bar_turno(df, title, ytitle):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def plot_html(df, title):
     """
     Funcion para dibujar los datos de un robot de esmaltado
@@ -220,7 +218,7 @@ def plot_html(df, title):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 def plot_html_all(df, df2, title_plot):
     """
     Funcion para dibujar los 2 robots en 1 misma grafica
