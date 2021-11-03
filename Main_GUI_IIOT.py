@@ -41,9 +41,8 @@ if page == "Celula de Esmaltado":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Selección de la fecha y el robot que se va analizar
-    st.subheader("1. Selección de Data a Analizar")
+    st.subheader("1. Selección de Periodo a Analizar")
     col1, col2 = st.columns(2)
-
     # Selección de la fecha
     with col1:
         st.markdown("**Opciones de Fecha**")
@@ -84,46 +83,56 @@ if page == "Celula de Esmaltado":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Conexión a la base de datos SQL, descarga y grafica
-    st.subheader("2. Descargar y Graficar Información")
-    with st.form("Prueba"):
-        if st.checkbox("Descargar y Graficar Información"):
-            with st.spinner('Descargando la información y dibujandola...'):
+    st.subheader("2. Descargar Información")
+    descargar = st.checkbox("Descargar Información")
+    if descargar:
+        with st.spinner('Descargando la información...'):
 
-                # Definición del robot seleccionado
-                if sel_robot == "Robot 1":
-                    tabla_sql = "robot1"
-                elif sel_robot == "Robot 2":
-                    tabla_sql = "robot2"
+            # Definición del robot seleccionado
+            if sel_robot == "Robot 1":
+                tabla_sql = "robot1"
+            elif sel_robot == "Robot 2":
+                tabla_sql = "robot2"
 
-                # Definición del rango de fecha seleccionado
-                # Por día
-                if sel_fecha == "Por día":
-                    text_dia = str(sel_dia)
-                    if sel_robot == "Ambos":
-                        robot1, robot2, fig = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        df, fig = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
-                                           redownload=flag_download)
-                        st.plotly_chart(fig, use_container_width=True)
+            # Definición del rango de fecha seleccionado
+            # Por día
+            if sel_fecha == "Por día":
+                text_dia = str(sel_dia)
+                if sel_robot == "Ambos":
+                    robot1, robot2, fig = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
+                else:
+                    df, fig = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
+                                       redownload=flag_download)
 
-                # Por rango de fecha
-                elif sel_fecha == "Por rango de días":
-                    text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
-                    if sel_robot == "Ambos":
-                        robot1, robot2, fig = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
-                                                           redownload=flag_download)
-                        st.plotly_chart(fig, use_container_width=True)
-                    else:
-                        df, fig = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
-                                           database=tabla_sql, table=tabla_sql, redownload=flag_download)
-                        st.plotly_chart(fig, use_container_width=True)
-        submitted = st.form_submit_button("Submit")
+            # Por rango de fecha
+            elif sel_fecha == "Por rango de días":
+                text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
+                if sel_robot == "Ambos":
+                    robot1, robot2, fig = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                                                       redownload=flag_download)
+                else:
+                    df, fig = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                                       database=tabla_sql, table=tabla_sql, redownload=flag_download)
+
+            st.success("Información descargada")
+# ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+    # Plotting th graph
+    st.subheader("3. Graficar Información")
+    plotting = st.checkbox("Graficar Información (Opcional)")
+    if plotting == True and descargar == False:
+        st.error("Descargue la información primero.")
+    elif plotting == True and descargar == True:
+        with st.spinner('Dibujando la información...'):
+            st.plotly_chart(fig, use_container_width=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Analitica de la información cargada
-    st.subheader("3. Analizar Información")
-    if st.checkbox("Analizar", key="Analizar"):
+    st.subheader("4. Analizar Información")
+    analizar = st.checkbox("Analizar", key="Analizar")
+    if analizar == True and descargar == False:
+        st.error("Descargue la información primero.")
+    elif analizar == True and descargar == True:
         with st.spinner('Analizando la información...'):
             # Ejecuto la función que analisa el DF descargado
             if sel_robot == "Ambos":
@@ -138,7 +147,7 @@ if page == "Celula de Esmaltado":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Reportes pre-establecidos de la data
-        st.subheader("4. Reportes Consumos y Cantidades")
+        st.subheader("4.1. Reportes Consumos y Cantidades")
         # ----------------------------------------------------------------------------------------------------------
         # FILTROS para los analisis y reportes
         # ----------------------------------------------------------------------------------------------------------
@@ -331,7 +340,7 @@ if page == "Celula de Esmaltado":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Analisis de la dispersión de esmaltado
-        st.subheader("5. Dispersión Esmaltado")
+        st.subheader("4.2. Dispersión Esmaltado")
         with st.expander("Ver dispersión esmaltado"):
             # Dispersión del esmalte usado
             st.markdown("**Dispersión Esmaltado en el Tiempo**")
@@ -391,7 +400,7 @@ if page == "Celula de Esmaltado":
             fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
             ss1.plotly_chart(fig, use_container_width=True)
-            # ------------------------------------------------------------------------------------------------------
+                # ------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 if page == "Online":
