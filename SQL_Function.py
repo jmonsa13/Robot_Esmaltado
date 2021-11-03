@@ -75,7 +75,7 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-# No poner cache en esta función para poder cargar los ultimos datos del día
+# No poner cache en esta función para poder cargar los ultimos datos del día.
 def find_load(tipo, day, ini, database, table, redownload):
     """
     Función que busca y carga el archivo de datos si este ya ha sido descargado.
