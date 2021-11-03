@@ -76,8 +76,15 @@ def find_analisis(df, robot, text_dia, redownload):
     OUTPUT:
         pd_sql: dataframe con los datos
     """
-    directory = './Data/Analizadas/'
-    filenames = os.listdir(directory)
+    # Setting the folder where to search
+    if text_dia[:4] == "from":
+        directory = './Data/Analizadas/'
+        filenames = os.listdir(directory)
+    else:
+        directory = './Data/Analizadas/' + text_dia[:-3] +'/'
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+        filenames = os.listdir(directory)
 
     # Empty datafram
     analisis_df = pd.DataFrame()
@@ -369,6 +376,17 @@ def analitica_esmalte(df, table, periodo):
     analisis_df[float_columns] = analisis_df[float_columns].apply(pd.to_numeric, errors='ignore')
 
     # Guardo el analisis realizado
-    analisis_df.to_csv('./Data/Analizadas/analisis_' + table + '_' + periodo + '.csv', index=False)
+    if periodo == str(datetime.date.today()):
+        pass  # No guardar datos si el día seleccionado es el día actual del sistema
+    else:
+        # Checking and creating the folder
+        if periodo[:4] == "from":
+            analisis_df.to_csv('./Data/Analizadas/analisis_' + table + '_' + periodo + '.csv', index=False)
+        else:
+            folder = periodo[:-3]
+            if not os.path.exists('./Data/Analizadas/' + folder):
+                os.makedirs('./Data/Analizadas/' + folder)
+            # Salvando el analisis
+            analisis_df.to_csv('./Data/Analizadas/' + folder + '/analisis_' + table + '_' + periodo + '.csv', index=False)
 
     return analisis_df

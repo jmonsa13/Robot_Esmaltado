@@ -75,8 +75,7 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
-@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
+# No poner cache en esta función para poder cargar los ultimos datos del día
 def find_load(tipo, day, ini, database, table, redownload):
     """
     Función que busca y carga el archivo de datos si este ya ha sido descargado.
@@ -85,7 +84,10 @@ def find_load(tipo, day, ini, database, table, redownload):
     OUTPUT:
         pd_sql: dataframe con los datos
     """
-    directory = './Data/Raw/'
+    # Setting the folder where to search
+    directory = './Data/Raw/' + day[:-3] +'/'
+    if not os.path.exists(directory):
+        os.makedirs(directory)
     filenames = os.listdir(directory)
 
     # Empty datafram
@@ -123,8 +125,7 @@ def find_load(tipo, day, ini, database, table, redownload):
     return pd_sql
 
 
-#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
-@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
+# No poner cache en esta función para poder cargar los ultimos datos del día
 def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
                 table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
     """
@@ -146,8 +147,11 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
                                    conn)
 
         # Guardando los datos en archivos estaticos
-        pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + '.csv', index=False)
-        # pd_sql.to_excel('./Data/Raw/tabla_' + table + '_'+ day + '.xlsx', index = False )
+        if day == str(datetime.date.today()):
+            pass  # No guardar datos si el día seleccionado es el día actual del sistema
+        else:
+            pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + '.csv', index=False)
+            # pd_sql.to_excel('./Data/Raw/tabla_' + table + '_'+ day + '.xlsx', index = False )
 
     elif tipo == "day_planta":
         ini, fin = add_day(day)
@@ -157,8 +161,17 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
         pd_sql_2 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + fin + "'"
                                      + " AND hora between 0 and 5", conn)
         pd_sql = pd.concat([pd_sql_1, pd_sql_2])
+
         # Guardando los datos en archivos estaticos
-        pd_sql.to_csv('./Data/Raw/tabla_' + table + '_' + day + '.csv', index=False)
+        if day == str(datetime.date.today()):
+            pass  # No guardar datos si el día seleccionado es el día actual del sistema
+        else:
+            # Checking and creating the folder
+            folder = day[:-3]
+            if not os.path.exists('./Data/Raw/' + folder):
+                os.makedirs('./Data/Raw/' + folder)
+            # Saving the raw data
+            pd_sql.to_csv('./Data/Raw/' + folder + '/tabla_' + table + '_' + day + '.csv', index=False)
 
     return pd_sql
 
