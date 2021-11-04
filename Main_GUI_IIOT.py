@@ -17,7 +17,7 @@ from pivottablejs import pivot_ui
 
 # Internal Function
 from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
-from Plot_Function import plot_bar, plot_bar_turno, plot_line, plot_html_all
+from Plot_Function import plot_bar, plot_bar_turno, plot_line, plot_html_all, plot_html
 from SQL_Function import sql_plot, sql_plot_all, sql_plot_live, sql_connect_live, fecha_format
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -99,19 +99,19 @@ if page == "Celula de Esmaltado":
             if sel_fecha == "Por día":
                 text_dia = str(sel_dia)
                 if sel_robot == "Ambos":
-                    robot1, robot2, fig = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
+                    robot1, robot2, title = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
                 else:
-                    df, fig = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
+                    df, title = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
                                        redownload=flag_download)
 
             # Por rango de fecha
             elif sel_fecha == "Por rango de días":
                 text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
                 if sel_robot == "Ambos":
-                    robot1, robot2, fig = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                    robot1, robot2, title = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
                                                        redownload=flag_download)
                 else:
-                    df, fig = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
+                    df, title = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
                                        database=tabla_sql, table=tabla_sql, redownload=flag_download)
 
             st.success("Información descargada")
@@ -120,10 +120,15 @@ if page == "Celula de Esmaltado":
     # Plotting th graph
     st.subheader("3. Graficar Información")
     plotting = st.checkbox("Graficar Información (Opcional)")
-    if plotting == True and descargar == False:
+    if plotting is True and descargar is False:
         st.error("Descargue la información primero.")
-    elif plotting == True and descargar == True:
+    elif plotting is True and descargar is True:
+
         with st.spinner('Dibujando la información...'):
+            if sel_robot == "Ambos":
+                fig = plot_html_all(robot1, robot2, title)
+            else:
+                fig = plot_html(df, title)
             st.plotly_chart(fig, use_container_width=True)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
@@ -309,7 +314,7 @@ if page == "Celula de Esmaltado":
 
             # Grafica de total de piezas fabricadas por día objetivo de 700 piezas
             # ME QUEDO SOLO CON LAS REFERENCIAS REALES DEL PROCESO
-            error_list = [0, 101, 126]
+            error_list = [0, 101, 126, 54, 118, 58]
 
             cantidad_piezas_grap = cantidad_piezas_grap.loc[:, ~cantidad_piezas_grap.columns.isin(error_list)]
             sum_cantidad = sum_procesos(cantidad_piezas_grap, "Piezas Esmaltadas")

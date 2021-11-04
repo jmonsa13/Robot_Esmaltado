@@ -230,9 +230,7 @@ def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', 
     elif tipo == "rango" or tipo == "rango_planta":
         title = "Variables " + table + " de Esmaltado entre " + ini + " y " + day
 
-    # Plotting the DF
-    fig = plot_html(df, title)
-    return df, fig
+    return df, title
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
@@ -267,10 +265,7 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=Fals
     elif tipo == "rango" or tipo == "rango_planta":
         title = "Variables Robots de Esmaltado entre " + ini + " y " + day
 
-    # Plotting the DF
-    fig = plot_html_all(df, df2, title)
-
-    return df, df2, fig
+    return df, df2, title
 
 def sql_plot_live(time=60,  day="2021-04-28"):
     """
