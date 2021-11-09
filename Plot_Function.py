@@ -10,7 +10,7 @@ from plotly.subplots import make_subplots
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
-def plot_line(df, title, ytitle, flag=False, limit=700):
+def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     """
     Funcion para dibujar las lines plot con los datos totales dia a dia de cada robot
     INPUT:
@@ -21,45 +21,61 @@ def plot_line(df, title, ytitle, flag=False, limit=700):
     OUTPUT:
         fig = objeto figura para dibujarlo externamente de la función
     """
-    fig = go.Figure()
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
 
+    # Bar and line plot together
     for i in df.columns.values.tolist()[1:]:
-        fig.add_trace(go.Scatter(x=df["Fecha_planta"],
+        if i == "Total":
+            fig.add_trace(go.Scatter(x=df["Fecha_planta"],
+                                     y=df["Total"],
+                                     mode='markers',  # 'lines+markers'
+                                     line=dict(color='gray', width=0.8),
+                                     marker=dict(size=6),
+                                     name=i.split(" ")[-1],
+                                     showlegend=True))
+        else:
+            fig.add_trace(go.Bar(x=df["Fecha_planta"],
                                  y=df[i],
-                                 # line=dict(color='black', width=1),
-                                 mode='lines+markers',  # 'lines+markers'
+                                 # text=df[int(elem)],textposition='auto',
                                  name=i.split(" ")[-1]))
+
+    # Salud de los datos  en un line plot en un secundo eje
+    fig.add_trace(go.Scatter(x=df["Fecha_planta"],
+                             y=salud,
+                             line=dict(color='black', width=0.8),
+                             mode='lines+markers',  # 'lines+markers'
+                             marker=dict(size=6),
+                             name="Salud_datos",
+                             visible='legendonly'),
+                  secondary_y=True)
 
     # Objetivo de fabricación
     if flag is True:
         fig.add_hline(y=limit, line_width=0.8, line_dash="dash", line_color="blue")
-        fig.update_layout(yaxis_range=[0, 1000])
+        fig.update_layout(yaxis_range=[0, 1000], barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
+    else:
+        fig.update_layout(barmode='stack', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
 
     # Add figure title
-    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
-    fig.update_layout(template="seaborn", title=title)
+    fig.update_layout(height=500, width=700, template="seaborn", title=title)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
-    fig['layout']['yaxis']['title'] = ytitle
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
-    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
-
     fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
 
-    fig.update_layout(legend=dict(
-        orientation="h",
-        yanchor="bottom",
-        y=1.01,
-        xanchor="left",
-        x=0.01
-    ))
+    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_yaxes(title_text=ytitle, secondary_y=False)
+    fig.update_yaxes(title_text="Salud de los datos [%]", secondary_y=True)
+
+
 
     return fig
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
-def plot_bar(df, title, ytitle):
+def plot_bar_referencia(df, salud, title, ytitle, flag):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
     INPUT:
@@ -71,7 +87,9 @@ def plot_bar(df, title, ytitle):
     """
     iter_colum = df.columns.values.tolist()[2:]
 
-    fig = go.Figure()
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    # Bar group por referencia
     for elem in iter_colum:
         fig.add_trace(go.Bar(
             x=df["Fecha_planta"],
@@ -79,23 +97,38 @@ def plot_bar(df, title, ytitle):
             # text=df[int(elem)],textposition='auto',
             name=elem))
 
+    # Salud de los datos en un line plot
+    fig.add_trace(go.Scatter(x=df["Fecha_planta"].unique(),
+                             y=salud,
+                             line=dict(color='black', width=0.8),
+                             mode='lines+markers',  # 'lines+markers'
+                             marker=dict(size=6),
+                             name="Salud_datos",
+                             visible='legendonly'),
+                  secondary_y=True)
+
     # Here we modify the tickangle of the xaxis, resulting in rotated labels.
-    fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=0)
-    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
-    fig.update_layout(template="seaborn", title=title)
+    if flag is True:
+        fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
+    else:
+        fig.update_layout(barmode='stack', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
+
+    fig.update_layout(height=500, width=700, legend=dict(orientation="v"),template="seaborn", title=title)
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
-    fig['layout']['yaxis']['title'] = ytitle
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
-    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
+
+    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_yaxes(title_text=ytitle, secondary_y=False)
+    fig.update_yaxes(title_text="Salud de los datos [%]", secondary_y=True)
 
     return fig
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
-def plot_bar_turno(df, title, ytitle):
+def plot_bar_turno(df, salud, title, ytitle):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
     INPUT:
@@ -107,12 +140,32 @@ def plot_bar_turno(df, title, ytitle):
     """
     df["Turno"] = df["Turno"].astype(str)
 
-    fig = px.bar(df, x="Fecha_planta", y="Cantidad", color="Turno")
+    #fig = px.bar(df, x="Fecha_planta", y="Cantidad", color="Turno")
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    for i in df["Turno"].unique():
+        aux = df[df["Turno"] == i]
+        fig.add_trace(go.Bar(
+            x=aux["Fecha_planta"],
+            y=aux["Cantidad"],
+            # text=df[int(elem)],textposition='auto',
+            name="Turno {}".format(i)))
+
+    # Salud de los datos en un line plot
+    fig.add_trace(go.Scatter(x=df["Fecha_planta"].unique(),
+                             y=salud,
+                             line=dict(color='black', width=0.8),
+                             mode='lines+markers',  # 'lines+markers'
+                             marker=dict(size=6),
+                             name="Salud_datos",
+                             visible='legendonly'),
+                  secondary_y=True)
 
     # Here we modify the tickangle of the xaxis, resulting in rotated labels.
-    fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=0)
-    fig.update_layout(height=500, width=700, legend=dict(orientation="v"))
-    fig.update_layout(template="seaborn", title=title)
+    fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
+    fig.update_layout(height=500, width=700, template="seaborn", title=title)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
@@ -120,7 +173,6 @@ def plot_bar_turno(df, title, ytitle):
 
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
-
     fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
 
     return fig
@@ -212,6 +264,8 @@ def plot_html(df, title):
     fig['layout']['yaxis4']['title'] = 'P Abanico'
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+
+
 
     # fig.show()
 

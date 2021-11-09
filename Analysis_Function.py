@@ -139,6 +139,7 @@ def analitica_esmalte(df, table, periodo):
     """
     Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado
     """
+    # TODO1: El tiempo se debe contar como la diferencia del valor anterior y no considerar que siempre es 1 segundo.
     # Inicialización del DF
     analisis_df = pd.DataFrame(columns=["Fecha", "Dia", "Turno", "Hora", "Robot", "Proceso_Completo",
                                         "Referencia", "Tiempo_Estado [s]", "Tiempo_Esmaltado [s]",
