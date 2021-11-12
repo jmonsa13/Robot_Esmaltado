@@ -69,8 +69,6 @@ def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     fig.update_yaxes(title_text=ytitle, secondary_y=False)
     fig.update_yaxes(title_text="Salud de los datos [%]", secondary_y=True)
 
-
-
     return fig
 
 
@@ -169,11 +167,12 @@ def plot_bar_turno(df, salud, title, ytitle):
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
-    fig['layout']['yaxis']['title'] = ytitle
 
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_xaxes(dtick="d0.5", tickformat="%b %d\n%Y")
+    fig.update_yaxes(title_text=ytitle, secondary_y=False)
+    fig.update_yaxes(title_text="Salud de los datos [%]", secondary_y=True)
 
     return fig
 
