@@ -3,13 +3,14 @@
 # 21-September-2021
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 from plotly.subplots import make_subplots
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     """
     Funcion para dibujar las lines plot con los datos totales dia a dia de cada robot
@@ -72,7 +73,7 @@ def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_bar_referencia(df, salud, title, ytitle, flag):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
@@ -111,7 +112,7 @@ def plot_bar_referencia(df, salud, title, ytitle, flag):
     else:
         fig.update_layout(barmode='stack', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
 
-    fig.update_layout(height=500, width=700, legend=dict(orientation="v"),template="seaborn", title=title)
+    fig.update_layout(height=500, width=700, legend=dict(orientation="v"), template="seaborn", title=title)
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
@@ -125,7 +126,7 @@ def plot_bar_referencia(df, salud, title, ytitle, flag):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_bar_turno(df, salud, title, ytitle):
     """
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
@@ -138,7 +139,7 @@ def plot_bar_turno(df, salud, title, ytitle):
     """
     df["Turno"] = df["Turno"].astype(str)
 
-    #fig = px.bar(df, x="Fecha_planta", y="Cantidad", color="Turno")
+    # fig = px.bar(df, x="Fecha_planta", y="Cantidad", color="Turno")
 
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
@@ -177,7 +178,7 @@ def plot_bar_turno(df, salud, title, ytitle):
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_html(df, title):
     """
     Funcion para dibujar los datos de un robot de esmaltado
@@ -187,7 +188,7 @@ def plot_html(df, title):
         fig = objeto figura para dibujarlo externamente de la función
     """
     # Create figure with secondary y-axis
-    fig = make_subplots(rows=4, cols=1, shared_xaxes=True,  vertical_spacing=0.02,
+    fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.02,
                         # subplot_titles=('Flujo Masico',  'Presión Atomización')
                         )
     # ----------------------------------------------------------------------------------------------------------
@@ -264,14 +265,12 @@ def plot_html(df, title):
     fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
     fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
 
-
-
     # fig.show()
 
     return fig
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_html_all(df, df2, title_plot):
     """
     Funcion para dibujar los 2 robots en 1 misma grafica

@@ -10,7 +10,9 @@ import pandas as pd
 import pyodbc
 import streamlit as st
 
-from Plot_Function import plot_html, plot_html_all
+from Plot_Function import plot_html_all
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
 # @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=False, ttl=24*3600)
@@ -59,6 +61,7 @@ def fecha_format(df):
 
     return df
 
+
 def add_day(day, add=1):
     """
     Función agrega o quita dias, teniendo en cuenta inicio de mes e inicio de año
@@ -85,7 +88,7 @@ def find_load(tipo, day, ini, database, table, redownload):
         pd_sql: dataframe con los datos
     """
     # Setting the folder where to search
-    directory = './Data/Raw/' + day[:-3] +'/'
+    directory = './Data/Raw/' + day[:-3] + '/'
     if not os.path.exists(directory):
         os.makedirs(directory)
     filenames = os.listdir(directory)
@@ -177,7 +180,7 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
 
 
 def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='robot1',
-                table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
+                     table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     INPUT:
@@ -195,12 +198,12 @@ def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='rob
 
     pd_sql = pd.read_sql_query('SELECT TOP ' + str(time) + ' * FROM ' + database + '.dbo.' + table +
                                " WHERE fecha like '" + day + "'" + ' ORDER BY hora DESC, minuto DESC, '
-                                                                  'segundo DESC ', conn)
+                                                                   'segundo DESC ', conn)
 
     return pd_sql
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', table="robot1",
              redownload=False):
     """
@@ -233,7 +236,7 @@ def sql_plot(tipo="day", day="2021-04-28", ini="2021-04-27", database='robot1', 
     return df, title
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=False):
     """
     Función que se conecta a la base de datos de ambos robots y crea el archivo de visualización a la vez que lo guarda
@@ -267,7 +270,8 @@ def sql_plot_all(tipo="day", day="2021-04-28", ini="2021-04-27", redownload=Fals
 
     return df, df2, title
 
-def sql_plot_live(time=60,  day="2021-04-28"):
+
+def sql_plot_live(time=60, day="2021-04-28"):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
     INPUT:
@@ -283,7 +287,7 @@ def sql_plot_live(time=60,  day="2021-04-28"):
     df["robot"] = "robot1"
 
     # Conexión y manejo robot 2
-    df2 = sql_connect_live(time=time+20, day=day, database="robot2", table="robot2")
+    df2 = sql_connect_live(time=time + 20, day=day, database="robot2", table="robot2")
     df2 = fecha_format(df2)
     df2["robot"] = "robot2"
 

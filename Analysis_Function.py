@@ -10,6 +10,8 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid
+
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
 def sum_procesos(df, name):
@@ -66,7 +68,8 @@ def round_np(x):
     """
     return np.round(x, 3)
 
-#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+
+# @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def find_analisis(df, robot, text_dia, redownload):
     """
@@ -81,13 +84,10 @@ def find_analisis(df, robot, text_dia, redownload):
         directory = './Data/Analizadas/'
         filenames = os.listdir(directory)
     else:
-        directory = './Data/Analizadas/' + text_dia[:-3] +'/'
+        directory = './Data/Analizadas/' + text_dia[:-3] + '/'
         if not os.path.exists(directory):
             os.makedirs(directory)
         filenames = os.listdir(directory)
-
-    # Empty datafram
-    analisis_df = pd.DataFrame()
 
     # Creo el nombre del archivo a buscar
     filename = 'analisis_' + robot + '_' + text_dia + '.csv'
@@ -133,7 +133,7 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
     return tiempo_var, total_var, max_var, flag_var, aux
 
 
-#@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
+# @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24*3600)
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def analitica_esmalte(df, table, periodo):
     """
@@ -178,16 +178,15 @@ def analitica_esmalte(df, table, periodo):
         # Flujo masico
         flujo_masico_total = 0
         max_flujo_masico = 0
-        desv_flujo_masico_max = 0
         aux_fm = 0
         aux_sfm = 0
 
         sp_flujo_masico_total = 0
         max_sp_fmasico = 0
 
-        # Presion de red
-        Max_Pred = 0
-        Total_Pred = 0
+        # Presión de red
+        max_pred = 0
+        total_pred = 0
 
         # Presiones
         total_pabanico = 0
@@ -236,7 +235,7 @@ def analitica_esmalte(df, table, periodo):
             peso_despues = df.iloc[idx]["peso_despues"]
 
             # Inicializar Presion de referencia minima
-            Min_Pred = df.iloc[idx]["presion_red"]
+            min_pred = df.iloc[idx]["presion_red"]
 
             # Mensajes de control
             print(robot, fecha_proceso, hora)
@@ -247,13 +246,13 @@ def analitica_esmalte(df, table, periodo):
                 tiempo_estado += 1
                 # --------------------------------------------------------------------------------------------
                 # Calcular LA PRESION DE RED
-                if Max_Pred < df.iloc[idx]["presion_red"]:
-                    Max_Pred = df.iloc[idx]["presion_red"]
+                if max_pred < df.iloc[idx]["presion_red"]:
+                    max_pred = df.iloc[idx]["presion_red"]
 
-                if Min_Pred > df.iloc[idx]["presion_red"]:
-                    Min_Pred = df.iloc[idx]["presion_red"]
+                if min_pred > df.iloc[idx]["presion_red"]:
+                    min_pred = df.iloc[idx]["presion_red"]
 
-                Total_Pred += df.iloc[idx]["presion_red"]
+                total_pred += df.iloc[idx]["presion_red"]
                 # --------------------------------------------------------------------------------------------
                 idx_var = idx
                 while total_flag is True:
@@ -282,11 +281,11 @@ def analitica_esmalte(df, table, periodo):
                     # --------------------------------------------------------------------------------------------
                     # Conteo del Presion abanico
                     tiempo_pabanico, total_pabanico, max_pabanico, flag_pabanico, \
-                    aux_pab = analisis_variable(df, idx_var, "pabanico", flag_pabanico,  tiempo_pabanico,
-                                                total_pabanico, max_pabanico,  aux_pab)
+                    aux_pab = analisis_variable(df, idx_var, "pabanico", flag_pabanico, tiempo_pabanico,
+                                                total_pabanico, max_pabanico, aux_pab)
                     # --------------------------------------------------------------------------------------------
                     # Conteo del  set_point -Presion abanico
-                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico, flag_sp_pabanico,\
+                    tiempo_sp_pabanico, total_sp_pabanico, max_sp_pabanico, flag_sp_pabanico, \
                     aux_spab = analisis_variable(df, idx_var, "sp_pabanico", flag_sp_pabanico, tiempo_sp_pabanico,
                                                  total_sp_pabanico, max_sp_pabanico, aux_spab)
                     # --------------------------------------------------------------------------------------------
@@ -306,7 +305,7 @@ def analitica_esmalte(df, table, periodo):
                         if aux_spab == 0:
                             flag_sp_pabanico = False
 
-                     # Logica para salir del while
+                    # Logica para salir del while
                     if flag_fmasico is False and flag_sp_fmasico is False and flag_patomizacion is False and \
                             flag_sp_patomizacion is False and flag_pabanico is False and flag_sp_pabanico is False:
                         total_flag = False
@@ -351,15 +350,15 @@ def analitica_esmalte(df, table, periodo):
                                       round_np(((flujo_masico_total * 1000) / tiempo_fmasico) * 60),
                                       round_np(((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico) * 60),  # [gr/min]
                                       round_np(desv_flujo_masico_max), peso_antes, peso_despues,
-                                      Max_Pred, Min_Pred, round_np((Total_Pred / tiempo_estado)),
+                                      max_pred, min_pred, round_np((total_pred / tiempo_estado)),
                                       max_patomizacion, round_np((total_patomizacion / tiempo_patomizacion)),
                                       round_np((total_sp_patomizacion / tiempo_sp_patomizacion)),
                                       round_np((total_patomizacion / tiempo_patomizacion) - (
-                                                  total_sp_patomizacion / tiempo_sp_patomizacion)),
+                                              total_sp_patomizacion / tiempo_sp_patomizacion)),
                                       max_pabanico, round_np((total_pabanico / tiempo_pabanico)),
                                       round_np((total_sp_pabanico / tiempo_sp_pabanico)),
                                       round_np((total_pabanico / tiempo_pabanico) - (
-                                                  total_sp_pabanico / tiempo_sp_pabanico)),
+                                              total_sp_pabanico / tiempo_sp_pabanico)),
                                       fecha_proceso]
 
             # Cuento la referencia esmaltada
@@ -388,6 +387,7 @@ def analitica_esmalte(df, table, periodo):
             if not os.path.exists('./Data/Analizadas/' + folder):
                 os.makedirs('./Data/Analizadas/' + folder)
             # Salvando el analisis
-            analisis_df.to_csv('./Data/Analizadas/' + folder + '/analisis_' + table + '_' + periodo + '.csv', index=False)
+            analisis_df.to_csv('./Data/Analizadas/' + folder + '/analisis_' + table + '_' + periodo + '.csv',
+                               index=False)
 
     return analisis_df
