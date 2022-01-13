@@ -23,7 +23,7 @@ def sum_procesos(df, name):
     OUTPUT:
         sum_df: data frame con la sumatoria
     """
-    # Nombre de las columnas por los robot que se tienen
+    # Nombre de las columnas por los robots que se tienen
     name_list = [name + " por " + i for i in df["Robot"].unique()]
 
     colum_name = df.columns.values.tolist()[2:]
@@ -73,11 +73,14 @@ def round_np(x):
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def find_analisis(df, robot, text_dia, redownload):
     """
-    Función que busca y carga el archivo de datos si este ya ha sido descargado.
+    Función que busca y carga el archivo de datos analizados o en su lugar analiza la data.
     INPUT:
-        tipo:
+        df: dataframe que contiene la serie de tiempo que se debe analizar
+        robot: Indicador del robot analizado en STR
+        text_dia: Información en STR sobre la fecha o rango analizado
+        redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
     OUTPUT:
-        pd_sql: dataframe con los datos
+        analisis_df: dataframe con los datos
     """
     # Setting the folder where to search
     if text_dia[:4] == "from":
@@ -100,6 +103,17 @@ def find_analisis(df, robot, text_dia, redownload):
 
 
 def correcion_div_0(tiempo_variable, tiempo_sp_var):
+    """
+    Función que corrige el error que causa la división por 0 que se puede presentar cuando el tiempo de las variables
+    es igual a 0.
+    INPUT:
+        tiempo_variable: tiempo de la variable
+        tiempo_sp_var: tiempo del set point
+    OUTPUT:
+        tiempo_variable: tiempo de la variable diferente de 0
+        tiempo_sp_var: tiempo del set point diferente de 0
+
+    """
     if tiempo_variable == 0:
         tiempo_variable = 0.001
     if tiempo_sp_var == 0:
@@ -121,7 +135,7 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
         if max_var < df.iloc[idx_variable][variable]:
             max_var = df.iloc[idx_variable][variable]
 
-    # Metodo para identificar que el proceso finalizo
+    # Método para identificar que el proceso finalizo
     elif df.iloc[idx_variable - 1][variable] > 0 and df.iloc[idx_variable][variable] == 0 and flag_var is True:
         # Evito error de desborde
         if idx_variable + 1 > df.shape[0] - 1:
@@ -137,7 +151,7 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def analitica_esmalte(df, table, periodo):
     """
-    Programa que analisa la serie de tiempo y crea un df con data de cada proceso de esmaltado
+    Programa que analiza la serie de tiempo y crea un df con data de cada proceso de esmaltado
     """
     # TODO1: El tiempo se debe contar como la diferencia del valor anterior y no considerar que siempre es 1 segundo.
     # Inicialización del DF

@@ -17,29 +17,43 @@ from pivottablejs import pivot_ui
 # Internal Function
 from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
 from Plot_Function import plot_bar_referencia, plot_bar_turno, plot_total, plot_html_all, plot_html
-from SQL_Function import sql_plot, sql_plot_all, sql_plot_live, sql_connect_live, fecha_format
+from SQL_Function import sql_plot_live, sql_connect_live, fecha_format, get_data_day, get_data_range
 
+
+import os
 # ----------------------------------------------------------------------------------------------------------------------
 # Streamlit Setting
-st.set_page_config(page_title="IIOT|Celula de Esmaltado - Corona",
+st.set_page_config(page_title="Celula de Esmaltado - Corona",
                    initial_sidebar_state="collapsed",
                    page_icon="📈",
                    layout="wide")
 
 tabs = ["Resumen Mensual", "Día a Día", "Online"]
-page = st.sidebar.radio("Tabs", tabs)
+page = st.sidebar.radio("Paginas", tabs)
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 # Initial page
-st.title(' 📈 IIOT - Corona 🤖')
+st.title(' 📈 Celula de Esmaltado - Corona 🤖')
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
 if page == "Resumen Mensual":
     st.header('Resumen Mensual Celula Robotizada Girardota')
 
+    directory = './Data/Analisis_Mensual/'
+    folders = os.listdir(directory)
+    st.write(folders)
 
-elif page == "Día a día":
-    st.header('Celula Robotizada de Esmaltado Girardota')
+    # Empty data frame
+
+    for folder in folders:
+        files = os.listdir(directory + folder)
+        for file in files:
+            st.write(file)
+
+
+
+elif page == "Día a Día":
+    st.header('Analisís del Día o del Periodo')
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Selección de la fecha y el robot que se va analizar
@@ -84,74 +98,35 @@ elif page == "Día a día":
             st.legacy_caching.clear_cache()
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
-    # Conexión a la base de datos SQL, descarga y grafica
-    st.subheader("2. Descargar Información")
-    descargar = st.checkbox("Descargar Información")
-    if descargar:
+    # Plotting th graph
+    st.subheader("2. Graficar Información")
+    descargar = st.checkbox("Graficar")
+    if descargar is True:
+        # Descargando la información
         with st.spinner('Descargando la información...'):
-
-            # Definición del robot seleccionado
-            if sel_robot == "Robot 1":
-                tabla_sql = "robot1"
-            elif sel_robot == "Robot 2":
-                tabla_sql = "robot2"
-
-            # Definición del rango de fecha seleccionado
-            segundos_dias = 86400
-            # Por día
             if sel_fecha == "Por día":
+                df, df2, salud_list, salud_datos, title = get_data_day(sel_robot, sel_dia, flag_download)
                 text_dia = str(sel_dia)
-                if sel_robot == "Ambos":
-                    df, df2, title = sql_plot_all(tipo="day_planta", day=str(sel_dia), redownload=flag_download)
-                else:
-                    df, title = sql_plot(tipo="day_planta", day=str(sel_dia), database=tabla_sql, table=tabla_sql,
-                                         redownload=flag_download)
-                # Salud de los datos
-                salud_datos = (df.shape[0] / segundos_dias) * 100
-                salud_list = [np.round(salud_datos, 2)]
-
-            # Por rango de fecha
+                # ------------------------------------------------------------------------------------------------------
+                # Finding missing dates for day only
+                debug = False
+                if debug is True:
+                    periodo = pd.date_range(start=str(sel_dia) + ' 06:00:00',
+                                            end=str(sel_dia + datetime.timedelta(days=1)) + ' 05:59:59', freq="s")
+                    diferencias = periodo.difference(df.index)
+                    st.write(diferencias)
+                # ------------------------------------------------------------------------------------------------------
             elif sel_fecha == "Por rango de días":
+                df, df2, salud_list, salud_datos, title = get_data_range(sel_robot, sel_dia_ini, sel_dia_fin,
+                                                                         flag_download)
                 text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
-                if sel_robot == "Ambos":
-                    df, df2, title = sql_plot_all(tipo="rango_planta", ini=str(sel_dia_ini),
-                                                  day=str(sel_dia_fin), redownload=flag_download)
-                else:
-                    df, title = sql_plot(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin),
-                                         database=tabla_sql, table=tabla_sql, redownload=flag_download)
-                # Salud de cada día en el periodo
-                salud_list = []
-                while sel_dia_ini <= sel_dia_fin:
-                    df_filter = df.loc[(df.index >= str(sel_dia_ini) + ' 06:00:00') &
-                                       (df.index <= str(sel_dia_ini + datetime.timedelta(days=1)) + ' 05:59:59')]
-
-                    salud_dia = np.round((df_filter.shape[0] / segundos_dias) * 100, 2)
-                    salud_list.append(salud_dia)
-                    # Avanzo un día
-                    sel_dia_ini = sel_dia_ini + datetime.timedelta(days=1)
-                salud_datos = sum(salud_list)/len(salud_list)
-
-                # Salud de los datos descargada
+            # ----------------------------------------------------------------------------------------------------------
+            # Salud de los datos descargada
             c1, c2, c3 = st.columns(3)
             c1.success("Información descargada")
             c2.metric(label="Salud global de los datos", value="{:.2f}%".format(salud_datos))
-
-            # Finding missing dates for day only
-            debug = False
-            if debug is True:
-                periodo = pd.date_range(start=str(sel_dia) + ' 06:00:00',
-                                        end=str(sel_dia + datetime.timedelta(days=1)) + ' 05:59:59', freq="s")
-                diferencias = periodo.difference(df.index)
-                st.write(diferencias)
-# ----------------------------------------------------------------------------------------------------------------------
-# ----------------------------------------------------------------------------------------------------------------------
-    # Plotting th graph
-    st.subheader("3. Graficar Información")
-    plotting = st.checkbox("Graficar Información (Opcional)")
-    if plotting is True and descargar is False:
-        st.error("Descargue la información primero.")
-    elif plotting is True and descargar is True:
-
+            # ----------------------------------------------------------------------------------------------------------
+        # Dibujando la grafica
         with st.spinner('Dibujando la información...'):
             if sel_robot == "Ambos":
                 fig = plot_html_all(df, df2, title)
@@ -161,20 +136,35 @@ elif page == "Día a día":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Analitica de la información cargada
-    st.subheader("4. Analizar Información")
+    st.subheader("3. Analizar Información")
     analizar = st.checkbox("Analizar", key="Analizar")
-    if analizar is True and descargar is False:
-        st.error("Descargue la información primero.")
-    elif analizar is True and descargar is True:
+    if analizar is True:
+        if descargar is False:
+            # Descargando la información
+            with st.spinner('Descargando la información...'):
+                if sel_fecha == "Por día":
+                    df, df2, salud_list, salud_datos, title = get_data_day(sel_robot, sel_dia, flag_download)
+                    text_dia = str(sel_dia)
+                elif sel_fecha == "Por rango de días":
+                    df, df2, salud_list, salud_datos, title = get_data_range(sel_robot, sel_dia_ini, sel_dia_fin,
+                                                                             flag_download)
+                    text_dia = "from_" + str(sel_dia_ini) + "_to_" + str(sel_dia_fin)
+                # ----------------------------------------------------------------------------------------------------------
+                # Salud de los datos descargada
+                c1, c2, c3 = st.columns(3)
+                c1.success("Información descargada")
+                c2.metric(label="Salud global de los datos", value="{:.2f}%".format(salud_datos))
+        # Analizando la información
         with st.spinner('Analizando la información...'):
-            # Ejecuto la función que analisa el DF descargado
+            # Ejecuto la función que analiza el DF descargado
             if sel_robot == "Ambos":
                 Analisis_df1 = find_analisis(df=df, robot="robot1", text_dia=text_dia, redownload=flag_download)
                 Analisis_df2 = find_analisis(df=df2, robot="robot2", text_dia=text_dia, redownload=flag_download)
                 Analisis_df = pd.concat([Analisis_df1, Analisis_df2])
             else:
-                Analisis_df = find_analisis(df=df, robot=tabla_sql, text_dia=text_dia, redownload=flag_download)
-
+                # Definición del robot seleccionado
+                Analisis_df = find_analisis(df=df, robot=sel_robot.lower().replace(" ", ""), text_dia=text_dia,
+                                            redownload=flag_download)
             # Visualizando la tabla
             visual_tabla_dinam(Analisis_df, "analisis_table")
 # ----------------------------------------------------------------------------------------------------------------------

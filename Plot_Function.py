@@ -13,11 +13,11 @@ from plotly.subplots import make_subplots
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     """
-    Funcion para dibujar las lines plot con los datos totales dia a dia de cada robot
+    Función para dibujar las lines plot con los datos totales dia a dia de cada robot
     INPUT:
         df = pandas dataframe pivoteado.
-        title =  Titulo de la grafica
-        ytitle =  Titulo del ejey
+        title = Título de la gráfica
+        ytitle = Título del eje y
         flag = Variable bandera para activar el limite de  piezas esmaltadas
     OUTPUT:
         fig = objeto figura para dibujarlo externamente de la función
@@ -60,6 +60,7 @@ def plot_total(df, salud, title, ytitle, flag=False, limit=700):
     # Add figure title
     fig.update_layout(height=500, width=700, template="seaborn", title=title)
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
@@ -79,8 +80,8 @@ def plot_bar_referencia(df, salud, title, ytitle, flag):
     Funcion para dibujar el bar plot con los datos de las tablas dinamicas
     INPUT:
         df = pandas dataframe pivoteado.
-        title =  Titulo de la grafica
-        ytitle =  Titulo del ejey
+        title = Título de la grafica
+        ytitle = Título del ejey
     OUTPUT:
         fig = objeto figura para dibujarlo externamente de la función
     """
@@ -113,6 +114,7 @@ def plot_bar_referencia(df, salud, title, ytitle, flag):
         fig.update_layout(barmode='stack', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
 
     fig.update_layout(height=500, width=700, legend=dict(orientation="v"), template="seaborn", title=title)
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
@@ -129,11 +131,12 @@ def plot_bar_referencia(df, salud, title, ytitle, flag):
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_bar_turno(df, salud, title, ytitle):
     """
-    Funcion para dibujar el bar plot con los datos de las tablas dinamicas
+    Función para dibujar el bar plot con los datos de las tablas dinamicas
     INPUT:
         df = pandas dataframe pivoteado.
-        title =  Titulo de la grafica
-        ytitle =  Titulo del ejey
+        salud = a List with the value of the health from the data
+        title = Título de la grafica
+        ytitle = Título del ejey
     OUTPUT:
         fig = objeto figura para dibujarlo externamente de la función
     """
@@ -165,6 +168,7 @@ def plot_bar_turno(df, salud, title, ytitle):
     fig.update_layout(barmode='group', bargap=0.3, bargroupgap=0.02, xaxis_tickangle=90)
     fig.update_layout(height=500, width=700, template="seaborn", title=title)
     fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
 
     # Set x-axis and y-axis title
     fig['layout']['xaxis']['title'] = 'Fecha Planta'
@@ -183,7 +187,8 @@ def plot_html(df, title):
     """
     Funcion para dibujar los datos de un robot de esmaltado
     INPUT:
-        df = pandas dataframe traido de la base de dato SQL del robot
+        df = pandas dataframe traído de la base de dato SQL del robot
+        title = Título de la grafica
     OUTPUT:
         fig = objeto figura para dibujarlo externamente de la función
     """
@@ -253,6 +258,7 @@ def plot_html(df, title):
 
     # Template
     fig.layout.template = 'seaborn'  # ggplot2, plotly_dark, seaborn, plotly, plotly_white
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
 
     # Set x-axis and y-axis title
     # fig.update_xaxes(title = "xaxis title")
@@ -273,12 +279,13 @@ def plot_html(df, title):
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
 def plot_html_all(df, df2, title_plot):
     """
-    Funcion para dibujar los 2 robots en 1 misma grafica
+    Función para dibujar los 2 robots en 1 misma gráfica
     INPUT:
-        df = pandas dataframe traido de la base de dato SQL del robot 1
-        df2 = pandas dataframe traido de la base de dato SQL del robot 2
+        df = Pandas dataframe traído de la base de dato SQL del robot 1
+        df2 = Pandas dataframe traído de la base de dato SQL del robot 2
+        title = Título de la gráfica
     OUTPUT:
-        fig = objeto figura para dibujarlo externamente de la función
+        fig = Objeto figura para dibujarlo externamente de la función
     """
     # Create figure with secondary y-axis
     fig = make_subplots(rows=4, cols=1, shared_xaxes=True, vertical_spacing=0.02,
@@ -392,6 +399,7 @@ def plot_html_all(df, df2, title_plot):
     # ----------------------------------------------------------------------------------------------------------
     # Add figure title
     fig.update_layout(height=1000, title=title_plot, legend=dict(orientation="v", ))
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
 
     # Template
     fig.layout.template = 'seaborn'  # ggplot2, plotly_dark, seaborn, plotly, plotly_white
