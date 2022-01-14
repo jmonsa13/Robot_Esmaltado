@@ -14,12 +14,13 @@ from st_aggrid import AgGrid
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
-def sum_procesos(df, name):
+def sum_procesos(df, name, column="Fecha_planta"):
     """
     Función para sumar los valores de las tablas dinamicas generadas por fecha
     INPUT:
         df: data frame pivotadeado a sumar
         name: Nombre a poner en la columna
+        column: Nombre de la columna donde se realizara la sumatoria
     OUTPUT:
         sum_df: data frame con la sumatoria
     """
@@ -30,13 +31,13 @@ def sum_procesos(df, name):
 
     sum_df = pd.DataFrame(
         '',
-        index=range(int(df["Fecha_planta"].nunique())),
-        columns=["Fecha_planta"] + name_list)
+        index=range(int(df[column].nunique())),
+        columns=[column] + name_list)
 
-    for i, elem in enumerate(df["Fecha_planta"].unique()):
-        sum_df.loc[sum_df.index[i], 'Fecha_planta'] = elem
+    for i, elem in enumerate(df[column].unique()):
+        sum_df.loc[sum_df.index[i], column] = elem
         for j, rob in enumerate(df["Robot"].unique()):
-            sum_df.loc[sum_df.index[i], name_list[j]] = df[(df["Fecha_planta"] == elem) &
+            sum_df.loc[sum_df.index[i], name_list[j]] = df[(df[column] == elem) &
                                                            (df["Robot"] == rob)][colum_name].sum().sum()
 
     return sum_df
