@@ -188,15 +188,21 @@ def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2
 
     # Salud de cada día en el periodo
     salud_list = []
-    while sel_dia_ini <= sel_dia_fin:
-        df_filter = df.loc[(df.index >= str(sel_dia_ini) + ' 06:00:00') &
-                           (df.index <= str(sel_dia_ini + datetime.timedelta(days=1)) + ' 05:59:59')]
+    sel_dia_ini_aux = sel_dia_ini
+    while sel_dia_ini_aux <= sel_dia_fin:
+        df_filter = df.loc[(df.index >= str(sel_dia_ini_aux) + ' 06:00:00') &
+                           (df.index <= str(sel_dia_ini_aux + datetime.timedelta(days=1)) + ' 05:59:59')]
 
         salud_dia = np.round((df_filter.shape[0] / segundos_dias) * 100, 2)
         salud_list.append(salud_dia)
         # Avanzo un día
-        sel_dia_ini = sel_dia_ini + datetime.timedelta(days=1)
+        sel_dia_ini_aux = sel_dia_ini_aux + datetime.timedelta(days=1)
     salud_datos = sum(salud_list) / len(salud_list)
+
+    # Saving the salud datos of the period
+    title_salud = "Salud_" + str(sel_dia_ini) + "_y_" + str(sel_dia_fin)
+    with open('./Data/Analizadas/' + title_salud + '.txt', 'w') as f:
+        f.write('%.2f' % salud_datos)
 
     return df, df2, salud_list, salud_datos, title
 
