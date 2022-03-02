@@ -43,14 +43,20 @@ if page == "Resumen Mensual":
     directory = './Data/Analisis_Mensual/'
     folders = os.listdir(directory)
 
-    # Empty data frame
+    # Empty data frame and list
     analisis_meses = pd.DataFrame()
+    salud_mes = []
 
     # Loading the DF of each month in a unique DF
     for folder in folders:
         files = os.listdir(directory + folder)
         for file in files:
-            analisis_meses = pd.concat([analisis_meses, load_data(folder=directory + folder + '/', filename=file)])
+            if file.split("_", 1)[0] == "Salud":
+                with open(directory + folder + '/' + file, "r", encoding="utf-8") as salud_file:
+                    salud_mes.append(float(salud_file.readline()))
+
+            else:
+                analisis_meses = pd.concat([analisis_meses, load_data(folder=directory + folder + '/', filename=file)])
 
     # Re.setting index
     analisis_meses.reset_index(drop=True, inplace=True)
@@ -115,7 +121,7 @@ if page == "Resumen Mensual":
 
     c1, c2 = st.columns(2)
     # -------------------------------------Plotly---------------------------------------------------------------
-    fig = plot_total(sum_cant_mensual, None, "Piezas Esmaltadas Mensualmente por Robot", "Piezas Esmaltadas [Und]",
+    fig = plot_total(sum_cant_mensual, salud_mes, "Piezas Esmaltadas Mensualmente por Robot", "Piezas Esmaltadas [Und]",
                      fecha_column="Fecha_AñoMes_planta", flag=False)
     fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
     fig.update_layout(xaxis_tickangle=0, barmode='group')
@@ -132,7 +138,7 @@ if page == "Resumen Mensual":
             sum_esmalte["Total"] += sum_esmalte[i]
 
     # PLOTLY
-    fig = plot_total(sum_esmalte, None, "Esmalte Usado por Robot y Total", "Esmalte Usado [Kg]",
+    fig = plot_total(sum_esmalte, salud_mes, "Esmalte Usado por Robot y Total", "Esmalte Usado [Kg]",
                      fecha_column="Fecha_AñoMes_planta", flag=False)
     fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
     fig.update_layout(xaxis_tickangle=0)
@@ -160,7 +166,7 @@ if page == "Resumen Mensual":
     df_turno = df_turno.groupby(["Fecha_AñoMes_planta", "Robot", "Turno"]).sum().reset_index()
     # -------------------------------------Plotly---------------------------------------------------------------
     # Cantidad de piezas esmaltadas
-    fig = plot_bar_turno(df=df_turno, salud=None,
+    fig = plot_bar_turno(df=df_turno, salud=salud_mes,
                          title="Cantidad Piezas Esmaltadas por Mes y Turno {}".format(sel_rob1.title()),
                          ytitle='Piezas Esmaltadas [Und]',
                          fecha_column="Fecha_AñoMes_planta")
@@ -180,7 +186,7 @@ if page == "Resumen Mensual":
     df_turno = df_turno.groupby(["Fecha_AñoMes_planta", "Robot", "Turno"]).sum().reset_index()
     # -------------------------------------Plotly---------------------------------------------------------------
     # Cantidad de Esmalte esmaltadas
-    fig = plot_bar_turno(df=df_turno, salud=None,
+    fig = plot_bar_turno(df=df_turno, salud=salud_mes,
                          title="Cantidad Esmalte Consumido por Día y Turno {}".format(sel_rob1.title()),
                          ytitle='Esmalte Consumido [Kg]',
                          fecha_column="Fecha_AñoMes_planta")
@@ -200,7 +206,7 @@ if page == "Resumen Mensual":
     sel_rob0 = gg1.selectbox("¿Que robot desea analizar?", list(cantidad_piezas["Robot"].unique()), 0, key="rob00")
 
     sel_turno = gg2.selectbox("¿Que turno desea analizar?", ["Día Completo"] +
-                             list(cantidad_piezas["Turno"].unique()), 0, key="Turno")
+                              list(cantidad_piezas["Turno"].unique()), 0, key="Turno")
 
     # Filtrado por el turno y el robot
     if sel_turno == "Día Completo":
@@ -221,7 +227,7 @@ if page == "Resumen Mensual":
 
     # -------------------------------------Plotly---------------------------------------------------------------
     # Cantidad de piezas esmaltadas
-    fig = plot_bar_referencia(df=cantidad_piezas_filt, salud=None,
+    fig = plot_bar_referencia(df=cantidad_piezas_filt, salud=salud_mes,
                               title="Cantidad de Piezas Esmaltadas {} y Turno {}".format(sel_rob0.title(),
                                                                                          sel_turno),
                               ytitle='Piezas Esmaltadas [Und]',
@@ -233,7 +239,7 @@ if page == "Resumen Mensual":
 
     # -------------------------------------Plotly---------------------------------------------------------------
     # Cantidad de esmalte usado
-    fig = plot_bar_referencia(df=esmalte_cons_filt, salud=None,
+    fig = plot_bar_referencia(df=esmalte_cons_filt, salud=salud_mes,
                               title="Esmalte Consumido por Referencia {} y Turno {}".format(sel_rob0.title(),
                                                                                             sel_turno),
                               ytitle='Esmalte Consumido [Kg]',
