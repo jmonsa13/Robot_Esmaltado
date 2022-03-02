@@ -198,6 +198,11 @@ def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2
         sel_dia_ini = sel_dia_ini + datetime.timedelta(days=1)
     salud_datos = sum(salud_list) / len(salud_list)
 
+    # Saving the salud datos of the period
+    title_salud = "Salud_" + str(sel_dia_ini) + "_y_" + str(sel_dia_fin)
+    with open('./Data/Analizadas/' + title_salud + '.txt', 'w') as f:
+        f.write('%.2f' % salud_datos)
+
     return df, df2, salud_list, salud_datos, title
 
 
