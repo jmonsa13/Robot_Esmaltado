@@ -50,6 +50,7 @@ def fecha_format(df):
     # Drop the columns peso_antes y peso_despues if exist. These values will come from a different table
     df = df.drop(['peso_antes', 'peso_despues'], axis=1, errors="ignore")
 
+    #TODO:  Poner la columna ID
 
     # Organizo las columnas del data frame
     re_columns = ['estado', 'fecha', 'referencia', 'sp_fmasico', 'fmasico', 'sp_patomizacion', 'patomizacion',
@@ -231,7 +232,7 @@ def find_load(tipo, day, ini, database, table, redownload):
         os.makedirs(directory)
     filenames = os.listdir(directory)
 
-    # Empty datafram
+    # Empty dataframe
     pd_sql = pd.DataFrame()
 
     if tipo == "day_planta":
@@ -252,6 +253,12 @@ def find_load(tipo, day, ini, database, table, redownload):
 
         # Recorro los días de ese periodo de tiempo
         while ini_date <= day_date:
+            # Setting the folder where to search
+            directory = './Data/Raw/' + str(ini_date)[:-3] + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            filenames = os.listdir(directory)
+
             # Creo el nombre del archivo a buscar
             filename = 'tabla_' + table + '_' + str(ini_date) + '.csv'
             if filename in filenames and redownload is False:
