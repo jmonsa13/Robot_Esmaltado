@@ -301,7 +301,7 @@ def plot_html_all(df, df2, title_plot):
                              name='Referencia 1', legendgroup="Ref", showlegend=True),
                   row=1, col=1)
     # ----------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(x=df.index, y=df2["referencia"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["referencia"],
                              line=dict(color='silver', width=1),
                              mode='lines',  # 'lines+markers'
                              name='Referencia 2', legendgroup="Ref2", showlegend=True),
@@ -321,13 +321,13 @@ def plot_html_all(df, df2, title_plot):
                              name='fmasico 1', legendgroup="Ref", showlegend=True),
                   secondary_y=False, row=2, col=1)
     # ----------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(x=df.index, y=df2["sp_fmasico"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["sp_fmasico"],
                              line=dict(color='grey', width=1, dash='dash'),
                              mode='lines',  # 'lines+markers'
                              name='sp_fmasico 2', legendgroup="Ref2", showlegend=True),
                   row=2, col=1)
 
-    fig.add_trace(go.Scatter(x=df.index, y=df2["fmasico"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["fmasico"],
                              line=dict(color='olivedrab', width=1),
                              mode='lines',  # 'lines+markers'
                              name='fmasico 2', legendgroup="Ref2", showlegend=True),
@@ -351,17 +351,17 @@ def plot_html_all(df, df2, title_plot):
                   secondary_y=False, row=3, col=1)
 
     # ----------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(x=df.index, y=df2["presion_red"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["presion_red"],
                              line=dict(color='silver', width=1),
                              mode='lines', name='Presion Red 2', legendgroup="Ref2", showlegend=True),
                   secondary_y=False, row=3, col=1)
 
-    fig.add_trace(go.Scatter(x=df.index, y=df2["sp_patomizacion"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["sp_patomizacion"],
                              line=dict(color='grey', width=1, dash='dash'),
                              mode='lines', name='sp_patomizacion 2', legendgroup="Ref2", showlegend=True),
                   secondary_y=False, row=3, col=1)
 
-    fig.add_trace(go.Scatter(x=df.index, y=df2["patomizacion"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["patomizacion"],
                              line=dict(color='olivedrab', width=1),
                              mode='lines', name='patomizacion 2', legendgroup="Ref2", showlegend=True),
                   secondary_y=False, row=3, col=1)
@@ -383,17 +383,17 @@ def plot_html_all(df, df2, title_plot):
                              mode='lines', name='Presion Red 1', legendgroup="Ref", showlegend=False),
                   secondary_y=False, row=4, col=1)
     # ----------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(x=df.index, y=df2["sp_pabanico"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["sp_pabanico"],
                              line=dict(color='grey', width=1, dash='dash'),
                              mode='lines', name='sp_pabanico 2', legendgroup="Ref2", showlegend=True),
                   secondary_y=False, row=4, col=1)
 
-    fig.add_trace(go.Scatter(x=df.index, y=df2["pabanico"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["pabanico"],
                              line=dict(color='olivedrab', width=1),
                              mode='lines', name='pabanico 2', legendgroup="Ref2", showlegend=True),
                   secondary_y=False, row=4, col=1)
 
-    fig.add_trace(go.Scatter(x=df.index, y=df2["presion_red"],
+    fig.add_trace(go.Scatter(x=df2.index, y=df2["presion_red"],
                              line=dict(color='silver', width=1),
                              mode='lines', name='Presion Red 2', legendgroup="Ref2", showlegend=False),
                   secondary_y=False, row=4, col=1)
