@@ -47,9 +47,12 @@ def fecha_format(df):
     df["fecha_planta"] = [elem - datetime.timedelta(days=1) if df["hora"].iloc[x] < 6 else elem for x, elem in
                           enumerate(df["fecha"])]
 
+    # Drop the columns peso_antes y peso_despues if exist. These values will come from a different table
+    df = df.drop(['peso_antes', 'peso_despues'], axis=1, errors="ignore")
+
+
     # Organizo las columnas del data frame
-    re_columns = ['estado', 'fecha', 'referencia', 'peso_antes', 'peso_despues', 'sp_fmasico', 'fmasico',
-                  'sp_patomizacion', 'patomizacion',
+    re_columns = ['estado', 'fecha', 'referencia', 'sp_fmasico', 'fmasico', 'sp_patomizacion', 'patomizacion',
                   'sp_pabanico', 'pabanico', 'presion_red', 'año', 'mes', 'dia', 'ndia', 'hora', 'minuto', 'segundo',
                   "fecha_planta"]
     df = df[re_columns]
