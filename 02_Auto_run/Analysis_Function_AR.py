@@ -135,7 +135,7 @@ def analitica_esmalte(df, table, periodo):
                                         "Esmalte_Usado [Kg]", "Esmalte_Usado_SP [Kg]", "Diff_Esmalte [gr]",
                                         "Max_Fmasico [gr/min]",
                                         "Promedio_Fmasico [gr/min]", "Promedio_SP_Fmasico [gr/min]",
-                                        "Desviacion_max_Fmasico [gr/min]", "Peso_Antes [Kg]", "Peso_Despues [kg]",
+                                        "Desviacion_max_Fmasico [gr/min]",
                                         "Max_Presion_Red [psi]", "Min_Presion_Red [psi]", "Promedio_Presion_Red [psi]",
                                         "Max_Presion_Atomizacion [psi]", "Promedio_Presion_Atomizacion [psi]",
                                         "Promedio_SP_Presion_Atomizacion [psi]", "Desviacion_Presion_Atomizacion [psi]",
@@ -217,10 +217,6 @@ def analitica_esmalte(df, table, periodo):
             ndia = df.iloc[idx]["ndia"]
             hora = df.index[idx].time()
             turno = np.floor((df.index[idx] - datetime.timedelta(hours=6)).time().hour / 8) + 1
-
-            # Guardo el peso antes y peso despues OJO AQUI HAY UN ERROR
-            peso_antes = df.iloc[idx]["peso_antes"]
-            peso_despues = df.iloc[idx]["peso_despues"]
 
             # Inicializar Presion de referencia minima
             min_pred = df.iloc[idx]["presion_red"]
@@ -337,7 +333,7 @@ def analitica_esmalte(df, table, periodo):
                                       round_np(max_flujo_masico),
                                       round_np(((flujo_masico_total * 1000) / tiempo_fmasico) * 60),
                                       round_np(((sp_flujo_masico_total * 1000) / tiempo_sp_fmasico) * 60),  # [gr/min]
-                                      round_np(desv_flujo_masico_max), peso_antes, peso_despues,
+                                      round_np(desv_flujo_masico_max),
                                       max_pred, min_pred, round_np((total_pred / tiempo_estado)),
                                       max_patomizacion, round_np((total_patomizacion / tiempo_patomizacion)),
                                       round_np((total_sp_patomizacion / tiempo_sp_patomizacion)),

@@ -43,7 +43,7 @@ def fecha_format(df):
                           enumerate(df["fecha"])]
 
     # Organizo las columnas del data frame
-    re_columns = ['estado', 'fecha', 'referencia', 'peso_antes', 'peso_despues', 'sp_fmasico', 'fmasico',
+    re_columns = ['estado', 'fecha', 'referencia', 'sp_fmasico', 'fmasico',
                   'sp_patomizacion', 'patomizacion',
                   'sp_pabanico', 'pabanico', 'presion_red', 'año', 'mes', 'dia', 'ndia', 'hora', 'minuto', 'segundo',
                   "fecha_planta"]
@@ -129,72 +129,6 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
     return df, df2, salud_list, salud_datos, title
 
 
-def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2022-01-02", flag_download=False):
-    """
-    Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
-    del periodo de fecha ingresado
-    INPUT:
-        sel_robot = ["robot1", "robot2", "Ambos"]
-        sel_dia_ini = Día inicial en STR ("2022-01-01")
-        sel_dia_fin = Día final en STR ("2022-01-02")
-        redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
-    OUTPUT:
-        df = pandas dataframe traído de la base de dato SQL, puede ser robot 1 o robot 2
-        df2 = pandas dataframe traído de la base de dato SQL, siempre es robot 2
-        salud_list = lista con el dato de salud por día
-        salud_datos = Numero | Salud total de los datos
-        title = Titulo para la gráfica
-        """
-    # Definición del rango de fecha seleccionado
-    segundos_dias = 86400
-
-    # Por rango
-    if sel_robot == "Ambos":
-        # Conexión y manejo robot 1
-        df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot1",
-                       table="robot1", redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = "robot1"
-
-        # Conexión y manejo robot 2
-        df2 = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot2",
-                        table="robot2", redownload=flag_download)
-        df2 = fecha_format(df2)
-        df2["robot"] = "robot2"
-
-        # Defining the title and filename for saving the plots
-        title = "Variables Robots de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
-    else:
-        # Definición del robot seleccionado
-        tabla_sql = sel_robot.lower().replace(" ", "")
-        # Empty second DF
-        df2 = None
-
-        # Conexión y manejo robot 1 o robot 2
-        df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database=tabla_sql,
-                       table=tabla_sql, redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = tabla_sql
-
-        # Defining the title and filename for saving the plots
-        title = "Variables " + tabla_sql + " de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
-
-    # Salud de cada día en el periodo
-    salud_list = []
-    while sel_dia_ini <= sel_dia_fin:
-        df_filter = df.loc[(df.index >= str(sel_dia_ini) + ' 06:00:00') &
-                           (df.index <= str(sel_dia_ini + datetime.timedelta(days=1)) + ' 05:59:59')]
-
-        salud_dia = np.round((df_filter.shape[0] / segundos_dias) * 100, 2)
-        salud_list.append(salud_dia)
-        # Avanzo un día
-        sel_dia_ini = sel_dia_ini + datetime.timedelta(days=1)
-    salud_datos = sum(salud_list) / len(salud_list)
-
-    return df, df2, salud_list, salud_datos, title
-
-
-# No poner cache en esta función para poder cargar los ultimos datos del día.
 def find_load(tipo, day, ini, database, table, redownload):
     """
     Función que busca y carga el archivo de datos si este ya ha sido descargado. En caso contrario lo descarga a través
@@ -215,7 +149,7 @@ def find_load(tipo, day, ini, database, table, redownload):
         os.makedirs(directory)
     filenames = os.listdir(directory)
 
-    # Empty datafram
+    # Empty dataframe
     pd_sql = pd.DataFrame()
 
     if tipo == "day_planta":
@@ -226,31 +160,9 @@ def find_load(tipo, day, ini, database, table, redownload):
         else:
             pd_sql = sql_connect(tipo=tipo, day=day, database=database, table=table)
 
-    elif tipo == "rango_planta":
-        # Fecha Inicial
-        l_ini_n = [int(x) for x in ini.split("-")]
-        ini_date = datetime.date(l_ini_n[0], l_ini_n[1], l_ini_n[2])
-        # Fecha Final
-        l_day_n = [int(x) for x in day.split("-")]
-        day_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
-
-        # Recorro los días de ese periodo de tiempo
-        while ini_date <= day_date:
-            # Creo el nombre del archivo a buscar
-            filename = 'tabla_' + table + '_' + str(ini_date) + '.csv'
-            if filename in filenames and redownload is False:
-                aux = load_data(folder=directory, filename=filename)
-            else:
-                aux = sql_connect(tipo="day_planta", day=str(ini_date), database=database, table=table)
-
-            pd_sql = pd.concat([pd_sql, aux])
-            # Avanzo un día
-            ini_date = ini_date + datetime.timedelta(days=1)
-
     return pd_sql
 
 
-# No poner cache en esta función para poder cargar los ultimos datos del día
 def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
                 table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
     """
