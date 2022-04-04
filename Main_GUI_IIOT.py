@@ -4,13 +4,13 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Libraries
 import datetime
+import os
 import time
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
-
 from pivottablejs import pivot_ui
 
 # Internal Function
@@ -18,7 +18,6 @@ from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
 from Plot_Function import plot_bar_referencia, plot_bar_turno, plot_total, plot_html_all, plot_html
 from SQL_Function import sql_plot_live, sql_connect_live, fecha_format, get_data_day, get_data_range, load_data
 
-import os
 # ----------------------------------------------------------------------------------------------------------------------
 # Streamlit Setting
 st.set_page_config(page_title="Celula de Esmaltado - Corona",
