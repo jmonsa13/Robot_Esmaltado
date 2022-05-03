@@ -100,6 +100,9 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
     # Definición del rango de fecha seleccionado
     segundos_dias = 86400
 
+    # Adjust in the reference name
+    dict_replace = {37: 9147, 38: 9311, 39: 9312}
+
     # Por día
     if sel_robot == "Ambos":
         # Conexión y manejo robot 1
@@ -117,6 +120,10 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
         # Defining the title and filename for saving the plots
         title = "Variables Robots de Esmaltado Día " + str(sel_dia)
 
+        # Rename the following references in columns
+        df["referencia"].replace(dict_replace, inplace=True)
+        df2["referencia"].replace(dict_replace, inplace=True)
+
     else:
         # Definición del robot seleccionado
         tabla_sql = sel_robot.lower().replace(" ", "")
@@ -132,9 +139,14 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
         # Defining the title and filename for saving the plots
         title = "Variables " + tabla_sql + " de Esmaltado Día " + str(sel_dia)
 
+        # Rename the following references in columns
+        df["referencia"].replace(dict_replace, inplace=True)
+
     # Salud de los datos
     salud_datos = (df.shape[0] / segundos_dias) * 100
     salud_list = [np.round(salud_datos, 2)]
+
+
 
     return df, df2, salud_list, salud_datos, title
 

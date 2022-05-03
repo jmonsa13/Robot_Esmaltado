@@ -103,6 +103,10 @@ def find_analisis(df, robot, text_dia, redownload):
     else:
         analisis_df = analitica_esmalte(df=df, table=robot, periodo=text_dia)
 
+    # Rename the following references in columns
+    dict_replace = {37: 9147, 38: 9311, 39: 9312}
+    analisis_df["Referencia"].replace(dict_replace, inplace=True)
+
     return analisis_df
 
 
