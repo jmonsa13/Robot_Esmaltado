@@ -420,3 +420,92 @@ def plot_html_all(df, df2, title_plot):
     # fig.show())
 
     return fig
+
+
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
+def plot_tiempo_muerto(df, title_plot):
+    """
+    Función para dibujar los tiempos muertos de los 2 robots en 1 misma gráfica
+    INPUT:
+        df = Pandas dataframe que tiene los tiempos muertos
+        title = Título de la gráfica
+    OUTPUT:
+        fig = Objeto figura para dibujarlo externamente de la función
+    """
+
+    #fig = px.line(Analisis_tiempos, x="Fecha_all", y="Tiempo_Muerto [s]",
+    #              color='Robot', title='Tiempo Muertos Celula de Esmaltado')
+
+    fig = go.Figure()
+
+    # Filtro por robot
+    r1_plot = df[df["Robot"] == 'robot1']
+    r2_plot = df[df["Robot"] == 'robot2']
+
+    #Robot1
+    fig.add_trace(go.Scatter(x=r1_plot["Fecha_all"], y=r1_plot["Tiempo_Muerto [s]"],
+                             line=dict(width=2, shape='hv'),
+                             mode='lines',  # 'lines+markers'
+                             name='Robot 1', showlegend=True))
+
+    #Robot2
+    fig.add_trace(go.Scatter(x=r2_plot["Fecha_all"], y=r2_plot["Tiempo_Muerto [s]"],
+                             line=dict(width=2, shape='hv'),
+                             mode='lines',  # 'lines+markers'
+                             name='Robot 2', showlegend=True))
+
+    # Add figure title
+    fig.update_layout(height=500, width=700, template="seaborn", title=title_plot)
+    #fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
+    fig.update_layout(modebar_add=["v1hovermode", "toggleSpikeLines"])
+
+    # Set x-axis and y-axis title
+    fig['layout']['xaxis']['title'] = 'Fecha'
+    fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+
+    return fig
+
+
+@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
+def plot_bar_acum_tiempo_muerto(df, title_plot):
+    """
+    Función para en barra el acumulado de  los tiempos muertos de los 2 robots en 1 misma gráfica
+    INPUT:
+        df = Pandas dataframe que tiene el groupby sum de los tiempos muertos
+        title = Título de la gráfica
+    OUTPUT:
+        fig = Objeto figura para dibujarlo externamente de la función
+    """
+    # Plotly
+    fig = go.Figure()
+
+    df_filter1 = df[df['Robot'] == "robot1"]
+    df_filter2 = df[df['Robot'] == "robot2"]
+
+    # Bar plot together
+    fig.add_trace(go.Bar(x=df_filter1['Robot'],
+                         y=df_filter1['Tiempo_Muerto [s]'],
+                         # text=df[int(elem)],textposition='auto',
+                         name="Robot 1"))
+
+    fig.add_trace(go.Bar(x=df_filter2['Robot'],
+                         y=df_filter2['Tiempo_Muerto [s]'],
+                         # text=df[int(elem)],textposition='auto',
+                         name="Robot 2"))
+
+    fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
+    fig.update_layout(xaxis_tickangle=0, barmode='group')
+
+    # Add figure title
+    fig.update_layout(height=500, width=700, template="seaborn", title=title_plot)
+    fig.update_layout(legend=dict(orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0.01))
+
+    # Set x-axis and y-axis title
+    fig['layout']['xaxis']['title'] = 'Robot'
+    fig['layout']['yaxis']['title'] = 'Tiempo Muerto [Min]'
+
+    fig.update_xaxes(showline=True, linewidth=0.5, linecolor='black')
+    fig.update_yaxes(showline=True, linewidth=0.5, linecolor='black')
+
+    return fig

@@ -15,7 +15,8 @@ from pivottablejs import pivot_ui
 
 # Internal Function
 from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
-from Plot_Function import plot_bar_referencia, plot_bar_turno, plot_total, plot_html_all, plot_html
+from Plot_Function import plot_bar_referencia, plot_bar_turno, plot_total, plot_html_all, plot_html,\
+    plot_tiempo_muerto, plot_bar_acum_tiempo_muerto
 from SQL_Function import sql_plot_live, sql_connect_live, fecha_format, get_data_day, get_data_range, load_data
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -367,13 +368,13 @@ elif page == "Día a Día":
             if sel_robot == "Ambos":
                 Analisis_df1 = find_analisis(df=df, robot="robot1", text_dia=text_dia, redownload=flag_download)
                 Analisis_df2 = find_analisis(df=df2, robot="robot2", text_dia=text_dia, redownload=flag_download)
-                Analisis_df = pd.concat([Analisis_df1, Analisis_df2])
+                Analisis_df_raw = pd.concat([Analisis_df1, Analisis_df2])
             else:
                 # Definición del robot seleccionado
-                Analisis_df = find_analisis(df=df, robot=sel_robot.lower().replace(" ", ""), text_dia=text_dia,
+                Analisis_df_raw = find_analisis(df=df, robot=sel_robot.lower().replace(" ", ""), text_dia=text_dia,
                                             redownload=flag_download)
             # Visualizando la tabla
-            visual_tabla_dinam(Analisis_df, "analisis_table")
+            visual_tabla_dinam(Analisis_df_raw, "analisis_table")
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Reportes pre-establecidos de la data
@@ -382,7 +383,7 @@ elif page == "Día a Día":
         # FILTROS para los analisis y reportes
         # ----------------------------------------------------------------------------------------------------------
         # Solo reporto los procesos que tuvieron algún consumo de esmalte.
-        Analisis_df = Analisis_df[Analisis_df["Esmalte_Usado [Kg]"] != 0]
+        Analisis_df = Analisis_df_raw[Analisis_df_raw["Esmalte_Usado [Kg]"] != 0]
 
         # Solo reporto los procesos que finalizaron el día que estoy contando.
         Analisis_df = Analisis_df[(Analisis_df["Proceso_Completo"] == 1) | (Analisis_df["Proceso_Completo"] == -1)]
@@ -576,10 +577,91 @@ elif page == "Día a Día":
                 t = pivot_ui(Analisis_df)
                 with open(t.src) as t:
                     components.html(t.read(), width=1200, height=600, scrolling=True)
+
 # ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
+        # Reportes tiempos muertos
+        st.subheader("4.2. Reportes Tiempos Muertos")
+        # ----------------------------------------------------------------------------------------------------------
+        # ANALIZANDO tiempos muertos entre procesos de esmaltados
+        # ----------------------------------------------------------------------------------------------------------
+        with st.expander("Ver reportes de tiempos muertos"):
+            var_robot = Analisis_df_raw["Robot"].unique()
+
+            # Definiendo el dataset total de tiempos
+            Analisis_tiempos = pd.DataFrame(columns=['Fecha_all', 'Fecha', 'Hora', 'Tiempo_Muerto [s]', 'Robot'])
+
+            for elem in var_robot:
+                # Filtrando el analisis por robot1
+                Analisis_df_raw_robot = Analisis_df_raw[Analisis_df_raw["Robot"] == elem]
+
+                #Convertiendo a string
+                Analisis_df_raw_robot["Fecha"] = Analisis_df_raw_robot["Fecha"].apply(lambda x: str(x))
+                Analisis_df_raw_robot["Hora"] = Analisis_df_raw_robot["Hora"].apply(lambda x: str(x))
+
+                # Creando la columna con fecha y hora Inicial del proceso
+                Fecha_ini = Analisis_df_raw_robot["Fecha"] + ", " + Analisis_df_raw_robot["Hora"]
+
+                # Convirtiendo a tipo datetime
+                Fecha_ini = pd.to_datetime(Fecha_ini, format="%Y-%m-%d, %H:%M:%S")
+
+                # Convirtiendo la duración del esmaltado en un timedelta.
+                time_delta = pd.to_timedelta(Analisis_df_raw_robot["Tiempo_Esmaltado [s]"], unit='s')
+
+                # Calculando la fecha final
+                Fecha_final = Fecha_ini + time_delta
+
+                # Cortando las listas para restar la fecha final a la fecha inicial posterior
+                Fecha_ini = Fecha_ini[1:]
+                Fecha_final = Fecha_final[:-1]
+
+                # Calculando tiempos muertos entre 2 procesos
+                tiempo_muerto = []
+                for i in range(len(Fecha_ini)):
+                    tiempo_muerto.append((Fecha_ini.iloc[i] - Fecha_final.iloc[i]).total_seconds())
+
+                # Descomponiendo la fecha_final en fecha y tiempo
+                Hora_final = Fecha_final.apply(lambda x: x.time())
+                Fecha = Fecha_final.apply(lambda x: x.date())
+
+                # Creando el df de tiempos muertos
+                Analisis_tiempos_aux = pd.DataFrame(list(zip(Fecha_final, Fecha, Hora_final, tiempo_muerto)),
+                                                    columns=['Fecha_all', 'Fecha', 'Hora', 'Tiempo_Muerto [s]'])
+                # Agregando el robot al df
+                Analisis_tiempos_aux["Robot"] = elem
+
+                # Guardando resultados en el dataset final de tiempos
+                Analisis_tiempos = pd.concat([Analisis_tiempos, Analisis_tiempos_aux])
+
+            # ----------------------------------------------------------------------------------------------------------
+            # Plotly
+            title = 'Tiempo Muertos Celula de Esmaltado'
+            fig = plot_tiempo_muerto(Analisis_tiempos, title)
+            st.plotly_chart(fig, use_container_width=True)
+            # ----------------------------------------------------------------------------------------------------------
+            # Filtro los datos mayores al tiempo maximo de traslación
+            transfer_time = st.number_input("¿Cuanto es el tiempo máximo de translación [s]?", 45)
+
+            m1, m2 = st.columns(2)
+            with m1:
+                # Visualizando la tabla
+                visual_tabla_dinam(Analisis_tiempos[['Fecha', 'Hora', 'Tiempo_Muerto [s]',
+                                                     'Robot']].round(2), "tiempos_m")
+            with m2:
+                Analisis_tiempos_filter = Analisis_tiempos[Analisis_tiempos['Tiempo_Muerto [s]'] > transfer_time]
+
+                bar_total_muerto = Analisis_tiempos_filter.groupby(by="Robot").sum()/60
+                bar_total_muerto.reset_index(inplace=True)
+
+                # ------------------------------------------------------------------------------------------------------
+                title_plot = "Acumulado Tiempo Muerto"
+                fig = plot_bar_acum_tiempo_muerto(bar_total_muerto, title_plot)
+                st.plotly_chart(fig, use_container_width=True)
+
+        # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Analisis de la dispersión de esmaltado
-        st.subheader("4.2. Dispersión Esmaltado")
+        st.subheader("4.3. Dispersión Esmaltado")
         with st.expander("Ver dispersión esmaltado"):
             # Dispersión del esmalte usado
             st.markdown("**Dispersión Esmaltado en el Tiempo**")
