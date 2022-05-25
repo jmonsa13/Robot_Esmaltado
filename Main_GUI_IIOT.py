@@ -648,8 +648,13 @@ elif page == "Día a Día":
                 visual_tabla_dinam(Analisis_tiempos[['Fecha', 'Hora', 'Tiempo_Muerto [s]',
                                                      'Robot']].round(2), "tiempos_m")
             with m2:
+                # Filtro el df para tener solo aquellos datos mayores al tiempo de transfer
                 Analisis_tiempos_filter = Analisis_tiempos[Analisis_tiempos['Tiempo_Muerto [s]'] > transfer_time]
 
+                # Elimino el tiempo muerto
+                Analisis_tiempos_filter['Tiempo_Muerto [s]'] -= transfer_time
+
+                # Sumo y convierto a minutos
                 bar_total_muerto = Analisis_tiempos_filter.groupby(by="Robot").sum()/60
                 bar_total_muerto.reset_index(inplace=True)
 
@@ -658,7 +663,7 @@ elif page == "Día a Día":
                 fig = plot_bar_acum_tiempo_muerto(bar_total_muerto, title_plot)
                 st.plotly_chart(fig, use_container_width=True)
 
-        # ----------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Analisis de la dispersión de esmaltado
         st.subheader("4.3. Dispersión Esmaltado")
