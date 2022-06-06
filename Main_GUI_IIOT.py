@@ -593,11 +593,11 @@ elif page == "Día a Día":
 
             for elem in var_robot:
                 # Filtrando el analisis por robot1
-                Analisis_df_raw_robot = Analisis_df_raw[Analisis_df_raw["Robot"] == elem]
+                Analisis_df_raw_robot = Analisis_df_raw[Analisis_df_raw["Robot"] == elem].copy()
 
                 #Convertiendo a string
-                Analisis_df_raw_robot["Fecha"] = Analisis_df_raw_robot["Fecha"].apply(lambda x: str(x))
-                Analisis_df_raw_robot["Hora"] = Analisis_df_raw_robot["Hora"].apply(lambda x: str(x))
+                Analisis_df_raw_robot.loc[:, "Fecha"] = Analisis_df_raw_robot["Fecha"].apply(lambda x: str(x))
+                Analisis_df_raw_robot.loc[:, "Hora"] = Analisis_df_raw_robot["Hora"].apply(lambda x: str(x))
 
                 # Creando la columna con fecha y hora Inicial del proceso
                 Fecha_ini = Analisis_df_raw_robot["Fecha"] + ", " + Analisis_df_raw_robot["Hora"]
@@ -649,10 +649,10 @@ elif page == "Día a Día":
                                                      'Robot']].round(2), "tiempos_m")
             with m2:
                 # Filtro el df para tener solo aquellos datos mayores al tiempo de transfer
-                Analisis_tiempos_filter = Analisis_tiempos[Analisis_tiempos['Tiempo_Muerto [s]'] > transfer_time]
+                Analisis_tiempos_filter = Analisis_tiempos[Analisis_tiempos['Tiempo_Muerto [s]'] > transfer_time].copy()
 
                 # Elimino el tiempo muerto
-                Analisis_tiempos_filter['Tiempo_Muerto [s]'] -= transfer_time
+                Analisis_tiempos_filter.loc[:, 'Tiempo_Muerto [s]'] -= transfer_time
 
                 # Sumo y convierto a minutos
                 bar_total_muerto = Analisis_tiempos_filter.groupby(by="Robot").sum()/60
