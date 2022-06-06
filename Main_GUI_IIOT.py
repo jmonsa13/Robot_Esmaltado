@@ -7,6 +7,7 @@ import datetime
 import os
 import time
 
+import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -633,36 +634,37 @@ elif page == "Día a Día":
                 # Guardando resultados en el dataset final de tiempos
                 Analisis_tiempos = pd.concat([Analisis_tiempos, Analisis_tiempos_aux])
 
+            # Agregando la columna turno
+            Analisis_tiempos['Turno'] = Analisis_tiempos['Fecha_all'].\
+                apply(lambda x: np.floor((x-datetime.timedelta(hours=6)).time().hour / 8) + 1)
+
             # ----------------------------------------------------------------------------------------------------------
             # Plotly
             title = 'Tiempo Muertos Celula de Esmaltado'
             fig = plot_tiempo_muerto(Analisis_tiempos, title)
             st.plotly_chart(fig, use_container_width=True)
             # ----------------------------------------------------------------------------------------------------------
-            # Filtro los datos mayores al tiempo maximo de traslación
-            transfer_time = st.number_input("¿Cuanto es el tiempo máximo de translación [s]?", 45)
-
             m1, m2 = st.columns(2)
             with m1:
+                # Filtro los datos mayores al tiempo maximo de traslación
+                tipo_visual = st.selectbox("Analizar total o por turnos", ["Total", "Turno"])
+
                 # Visualizando la tabla
                 visual_tabla_dinam(Analisis_tiempos[['Fecha', 'Hora', 'Tiempo_Muerto [s]',
-                                                     'Robot']].round(2), "tiempos_m")
+                                                     'Robot', 'Turno']].round(2), "tiempos_m")
             with m2:
+                # Filtro los datos mayores al tiempo maximo de traslación
+                transfer_time = st.number_input("¿Cuanto es el tiempo máximo de translación [s]?", 45)
+
                 # Filtro el df para tener solo aquellos datos mayores al tiempo de transfer
                 Analisis_tiempos_filter = Analisis_tiempos[Analisis_tiempos['Tiempo_Muerto [s]'] > transfer_time].copy()
 
                 # Elimino el tiempo muerto
                 Analisis_tiempos_filter.loc[:, 'Tiempo_Muerto [s]'] -= transfer_time
-
-                # Sumo y convierto a minutos
-                bar_total_muerto = Analisis_tiempos_filter.groupby(by="Robot").sum()/60
-                bar_total_muerto.reset_index(inplace=True)
-
                 # ------------------------------------------------------------------------------------------------------
                 title_plot = "Acumulado Tiempo Muerto"
-                fig = plot_bar_acum_tiempo_muerto(bar_total_muerto, title_plot)
+                fig = plot_bar_acum_tiempo_muerto(Analisis_tiempos_filter, title_plot, tipo_visual)
                 st.plotly_chart(fig, use_container_width=True)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Analisis de la dispersión de esmaltado

@@ -468,7 +468,7 @@ def plot_tiempo_muerto(df, title_plot):
 
 
 @st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
-def plot_bar_acum_tiempo_muerto(df, title_plot):
+def plot_bar_acum_tiempo_muerto(df_raw, title_plot, tipo_visual):
     """
     Función para en barra el acumulado de  los tiempos muertos de los 2 robots en 1 misma gráfica
     INPUT:
@@ -480,22 +480,53 @@ def plot_bar_acum_tiempo_muerto(df, title_plot):
     # Plotly
     fig = go.Figure()
 
-    df_filter1 = df[df['Robot'] == "robot1"]
-    df_filter2 = df[df['Robot'] == "robot2"]
+    if tipo_visual == 'Total':
+        # Sumo y convierto a minutos
+        df = df_raw.groupby(by="Robot").sum() / 60
+        df.reset_index(inplace=True)
 
-    # Bar plot together
-    fig.add_trace(go.Bar(x=df_filter1['Robot'],
-                         y=df_filter1['Tiempo_Muerto [s]'],
-                         # text=df[int(elem)],textposition='auto',
-                         name="Robot 1"))
+        df_filter1 = df[df['Robot'] == "robot1"]
+        df_filter2 = df[df['Robot'] == "robot2"]
 
-    fig.add_trace(go.Bar(x=df_filter2['Robot'],
-                         y=df_filter2['Tiempo_Muerto [s]'],
-                         # text=df[int(elem)],textposition='auto',
-                         name="Robot 2"))
+        # Bar plot together
+        fig.add_trace(go.Bar(x=df_filter1['Robot'],
+                             y=df_filter1['Tiempo_Muerto [s]'],
+                             # text=df[int(elem)],textposition='auto',
+                             name="Robot 1"))
 
+        fig.add_trace(go.Bar(x=df_filter2['Robot'],
+                             y=df_filter2['Tiempo_Muerto [s]'],
+                             # text=df[int(elem)],textposition='auto',
+                             name="Robot 2"))
+
+    elif tipo_visual == 'Turno':
+        # Sumo y convierto a minutos
+        df = df_raw.groupby(by=["Robot", "Turno"]).sum() / 60
+        df.reset_index(inplace=True)
+
+        df_filter1 = df[df['Robot'] == "robot1"]
+        df_filter2 = df[df['Robot'] == "robot2"]
+
+        for i in df_filter1["Turno"].unique():
+            aux = df_filter1[df_filter1["Turno"] == i]
+            fig.add_trace(go.Bar(
+                x=aux['Robot'],
+                y=aux['Tiempo_Muerto [s]'],
+                # text=df[int(elem)],textposition='auto',
+                name="R1 Turno {}".format(i),
+                legendgroup="Turno {}".format(i)))
+
+        for i in df_filter2["Turno"].unique():
+            aux = df_filter2[df_filter2["Turno"] == i]
+            fig.add_trace(go.Bar(
+                x=aux['Robot'],
+                y=aux['Tiempo_Muerto [s]'],
+                # text=df[int(elem)],textposition='auto',
+                name="R2 Turno {}".format(i),
+                legendgroup="Turno {}".format(i)))
+
+    fig.update_layout(barmode='group', xaxis_tickangle=0) #  bargap=0.3, bargroupgap=0.02
     fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
-    fig.update_layout(xaxis_tickangle=0, barmode='group')
 
     # Add figure title
     fig.update_layout(height=500, width=700, template="seaborn", title=title_plot)
