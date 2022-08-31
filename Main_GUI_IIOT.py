@@ -12,7 +12,6 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 import streamlit.components.v1 as components
-from pivottablejs import pivot_ui
 
 # Internal Function
 from Analysis_Function import find_analisis, visual_tabla_dinam, sum_procesos
@@ -266,7 +265,7 @@ elif page == "Día a Día":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Selección de la fecha y el robot que se va analizar
-    st.subheader("1. Selección de Periodo a Analizar")
+    st.subheader("1| Selección de Periodo a Analizar")
     col1, col2 = st.columns(2)
     # Selección de la fecha
     with col1:
@@ -301,14 +300,12 @@ elif page == "Día a Día":
         st.markdown("**Selección del Robot**")
         sel_robot = st.radio("¿Que Robot desea analizar?", ('Robot 1', 'Robot 2', 'Ambos'), key="robot")
 
+        # Descargar nuevamente flag
         flag_download = False
-        if st.checkbox("Descargar nuevamente"):
-            flag_download = True
-            st.legacy_caching.clear_cache()
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Plotting th graph
-    st.subheader("2. Graficar Información")
+    st.subheader("2| Graficar Información")
     descargar = st.checkbox("Graficar")
     if descargar is True:
         # Descargando la información
@@ -335,6 +332,14 @@ elif page == "Día a Día":
             c1.success("Información descargada")
             c2.metric(label="Salud global de los datos", value="{:.2f}%".format(salud_datos))
             # ----------------------------------------------------------------------------------------------------------
+
+        # Button to refresh the data
+        if st.button("Refrescar gráfica", key="refrescar"):
+            flag_download = True
+            get_data_day.clear()
+            get_data_range.clear()
+            st.experimental_rerun()
+
         # Dibujando la grafica
         with st.spinner('Dibujando la información...'):
             if sel_robot == "Ambos":
@@ -345,7 +350,7 @@ elif page == "Día a Día":
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
     # Analitica de la información cargada
-    st.subheader("3. Analizar Información")
+    st.subheader("3| Analizar Información")
     analizar = st.checkbox("Analizar", key="Analizar")
     if analizar is True:
         if descargar is False:
@@ -573,12 +578,6 @@ elif page == "Día a Día":
 
             p2.plotly_chart(fig, use_container_width=True)
             # ----------------------------------------------------------------------------------------------------------
-            # Programa para reporte manual de tablas dinamicas usando pivot_ui
-            if st.checkbox("Reporte Manual"):
-                t = pivot_ui(Analisis_df)
-                with open(t.src) as t:
-                    components.html(t.read(), width=1200, height=600, scrolling=True)
-
 # ----------------------------------------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------------------------
         # Reportes tiempos muertos
@@ -813,7 +812,7 @@ elif page == "Online":
             # Wait x seconds before updating
             time.sleep(30)
             print(cont)
-            st.legacy_caching.clear_cache()
+            st.experimental_singleton.clear()
 
 # ----------------------------------------------------------------------------------------------------------------------
 st.sidebar.header("Acerca de la App")
