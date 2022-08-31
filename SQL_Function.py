@@ -8,8 +8,10 @@ import os
 
 import numpy as np
 import pandas as pd
-import pyodbc
 import streamlit as st
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 
 from Plot_Function import plot_html_all
 
@@ -82,7 +84,7 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False):
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
@@ -151,7 +153,7 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
     return df, df2, salud_list, salud_datos, title
 
 
-@st.cache(persist=False, allow_output_mutation=True, suppress_st_warning=True, show_spinner=True, ttl=24 * 3600)
+@st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2022-01-02", flag_download=False):
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
@@ -286,8 +288,7 @@ def find_load(tipo, day, ini, database, table, redownload):
 
 
 # No poner cache en esta función para poder cargar los ultimos datos del día
-def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
-                table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
+def sql_connect(tipo, day, database, table):  # hour=6
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     INPUT:
@@ -298,9 +299,18 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
     OUTPUT:
         pd_sql = pandas dataframe traído de la base de dato SQL
     """
+    # Connection keys
+    load_dotenv('./.env')
+
+    server = os.environ.get("SERVER")
+    username = os.environ.get("USER_SQL")
+    password = os.environ.get("PASSWORD")
+
     # Connecting to the sql database
-    conn = pyodbc.connect(
-        'driver={SQL Server};server=%s;database=%s;uid=%s;pwd=%s' % (server, database, username, password))
+    connection_str = "DRIVER={SQL Server};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s" % (server, database, username, password)
+    connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_str})
+
+    conn = create_engine(connection_url)
     # ------------------------------------------------------------------------------------------------------------------
     # Tipos de conexiones establecidas para traer distintas cantidades de datos
     # ------------------------------------------------------------------------------------------------------------------
@@ -370,8 +380,7 @@ def sql_plot_live(time=60, day="2021-04-28"):
     return df, df2, fig
 
 
-def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='robot1',
-                     table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
+def sql_connect_live(time, day, database, table):  # hour=6
     """
     Programa que permite conectar con una base de dato del servidor descargar los ultimos registros denotados en time
     INPUT:
@@ -382,9 +391,19 @@ def sql_connect_live(time=60, day="2021-04-28", server='EASAB101', database='rob
     OUTPUT:
         pd_sql = pandas dataframe traido de la base de dato SQL
     """
+
+    # Connection keys
+    load_dotenv('./.env')
+
+    server = os.environ.get("SERVER")
+    username = os.environ.get("USER_SQL")
+    password = os.environ.get("PASSWORD")
+
     # Connecting to the sql database
-    conn = pyodbc.connect(
-        'driver={SQL Server};server=%s;database=%s;uid=%s;pwd=%s' % (server, database, username, password))
+    connection_str = "DRIVER={SQL Server};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s" % (server, database, username, password)
+    connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_str})
+
+    conn = create_engine(connection_url)
     # ------------------------------------------------------------------------------------------------------------------
     # Tipos de conexiones establecidas para traer distintas cantidades de datos
     # ------------------------------------------------------------------------------------------------------------------
