@@ -253,12 +253,12 @@ if page == "Resumen Mensual":
         st.markdown("**Cantidad de Piezas Esmaltadas**")
         # Visualizando la tabla
         st.write("Cantidad de piezas esmaltadas por referencía, robot y turno.")
-        visual_tabla_dinam(cantidad_piezas, "cantidad_piezas")
+        visual_tabla_dinam(cantidad_piezas, "cantidad_piezas", flag_fecha=2)
 
         st.markdown("**Cantidad de Esmalte Consumido**")
         st.write("Cantidad de esmalte utilizado por referencía, día, robot y turno.")
         # Visualizando la tabla
-        visual_tabla_dinam(esmalte_cons.round(2), "esmalte_cons")
+        visual_tabla_dinam(esmalte_cons.round(2), "esmalte_cons", flag_fecha=2)
 
 elif page == "Día a Día":
     st.header('Analisís del Día o del Periodo')
@@ -332,7 +332,6 @@ elif page == "Día a Día":
             c1.success("Información descargada")
             c2.metric(label="Salud global de los datos", value="{:.2f}%".format(salud_datos))
             # ----------------------------------------------------------------------------------------------------------
-
         # Button to refresh the data
         if st.button("Refrescar gráfica", key="refrescar"):
             flag_download = True
@@ -354,6 +353,13 @@ elif page == "Día a Día":
     analizar = st.checkbox("Analizar", key="Analizar")
     if analizar is True:
         if descargar is False:
+            # Button to refresh the data
+            if st.button("Refrescar Análisis", key="refrescar_analisis"):
+                flag_download = True
+                get_data_day.clear()
+                get_data_range.clear()
+                st.experimental_rerun()
+
             # Descargando la información
             with st.spinner('Descargando la información...'):
                 if sel_fecha == "Por día":
@@ -417,7 +423,7 @@ elif page == "Día a Día":
             cantidad_piezas_grap.columns = list(map(str, cantidad_piezas_grap.columns.values.tolist()))
 
             # Visualizando la tabla
-            visual_tabla_dinam(cantidad_piezas, "cantidad_piezas")
+            visual_tabla_dinam(cantidad_piezas, "cantidad_piezas", flag_fecha=0)
             # ------------------------------------------------------------------------------------------------------
             # Tablas dinamicas de horas por piezas
             horas_piezas = Analisis_df.pivot_table(index=["Fecha_planta", "Robot", "Turno"],
@@ -431,7 +437,7 @@ elif page == "Día a Día":
             horas_piezas.columns = list(map(str, horas_piezas.columns.values.tolist()))
 
             # Visualizando la tabla
-            visual_tabla_dinam(horas_piezas.round(2), "horas_piezas")
+            visual_tabla_dinam(horas_piezas.round(2), "horas_piezas", flag_fecha=0)
             # ------------------------------------------------------------------------------------------------------
             # Tablas dinamicas de esmalte consumido por pieza
             esmalte_cons = Analisis_df.pivot_table(index=["Fecha_planta", "Robot", "Turno"],
@@ -451,7 +457,7 @@ elif page == "Día a Día":
             esmalte_cons_grap.columns = list(map(str, esmalte_cons_grap.columns.values.tolist()))
 
             # Visualizando la tabla
-            visual_tabla_dinam(esmalte_cons.round(2), "esmalte_cons")
+            visual_tabla_dinam(esmalte_cons.round(2), "esmalte_cons", flag_fecha=0)
             # ----------------------------------------------------------------------------------------------------------
             # ----------------------------------------------------------------------------------------------------------
             st.markdown("**Graficas de Piezas Fabricadas y Esmalte Consumido Total por Día**")
@@ -650,7 +656,7 @@ elif page == "Día a Día":
 
                 # Visualizando la tabla
                 visual_tabla_dinam(Analisis_tiempos[['Fecha', 'Hora', 'Tiempo_Muerto [s]',
-                                                     'Robot', 'Turno']].round(2), "tiempos_m")
+                                                     'Robot', 'Turno']].round(2), "tiempos_m", flag_fecha=3)
             with m2:
                 # Filtro los datos mayores al tiempo maximo de traslación
                 transfer_time = st.number_input("¿Cuanto es el tiempo máximo de translación [s]?", 45)

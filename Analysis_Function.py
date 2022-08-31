@@ -9,7 +9,7 @@ import os
 import numpy as np
 import pandas as pd
 import streamlit as st
-from st_aggrid import AgGrid
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ def sum_procesos(df, name, column="Fecha_planta"):
     return sum_df
 
 
-def visual_tabla_dinam(df, key):
+def visual_tabla_dinam(df, key, flag_fecha=1):
     """
     Función para generar las tablas dinamicas que se visualizan
     INPUT:
@@ -52,13 +52,30 @@ def visual_tabla_dinam(df, key):
 
     """
     # Definiendo la tabla de visualización
-    # gb = GridOptionsBuilder.from_dataframe(df)
-    # gb.configure_side_bar()
-    # gridoptions = gb.build()
+    gb = GridOptionsBuilder.from_dataframe(df)
+    gb.configure_side_bar()
 
-    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True, defaultWidth=5,
-           fit_columns_on_grid_load=False, theme="streamlit",  # "light", "dark", "blue", "material"
-           key=key, reload_data=True,  # gridOptions=gridoptions,
+    if flag_fecha == 1:
+        gb.configure_column("Fecha", type=["dateColumnFilter", "customDateTimeFormat"],
+                            custom_format_string='yyyy-MM-dd', pivot=True)
+        gb.configure_column("Fecha_planta", type=["dateColumnFilter", "customDateTimeFormat"],
+                            custom_format_string='yyyy-MM-dd', pivot=True)
+    elif flag_fecha == 0:
+        gb.configure_column("Fecha_planta", type=["dateColumnFilter", "customDateTimeFormat"],
+                            custom_format_string='yyyy-MM-dd', pivot=True)
+    elif flag_fecha == 2:
+        gb.configure_column("Fecha_AñoMes_planta", type=["dateColumnFilter", "customDateTimeFormat"],
+                            custom_format_string='yyyy-MM', pivot=True)
+    elif flag_fecha == 3:
+        gb.configure_column("Fecha", type=["dateColumnFilter", "customDateTimeFormat"],
+                            custom_format_string='yyyy-MM-dd', pivot=True)
+
+    gb.configure_grid_options(domLayout='normal')
+    gridoptions = gb.build()
+
+    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True,  height=400, width='50%', defaultWidth=3,
+           theme="balham",  # "light", "dark", "blue", "material" # defaultWidth=3, fit_columns_on_grid_load=False,
+           key=key, reload_data=True,  gridOptions=gridoptions,
            enable_enterprise_modules=True)
     return
 
