@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 
-from Plot_Function import plot_html_all
+from Plot_Function import plot_html, plot_html_all
 
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -85,10 +85,11 @@ def add_day(day, add=1):
 
 
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
-def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False):
+def get_data_day(sel_celula, sel_robot,  sel_dia, flag_download=False):
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     INPUT:
+        Sel_celula = ['Célula 4', 'Célula 1']
         sel_robot = ["robot1", "robot2", "Ambos"]
         sel_dia = Día inicial EN STR
         redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
@@ -102,63 +103,77 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
     # Definición del rango de fecha seleccionado
     segundos_dias = 86400
 
-    # Adjust in the reference name
-    dict_replace = {37: 9147, 38: 9311, 39: 9312}
+    # Por Robot
+    if sel_celula == 'Célula 4':
+        # Adjust in the reference name
+        dict_replace = {37: 9147, 38: 9311, 39: 9312}
+        # Por día
+        if sel_robot == "Ambos":
+            # Conexión y manejo robot 1
+            df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot1",
+                           table="robot1", redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = "robot1"
 
-    # Por día
-    if sel_robot == "Ambos":
-        # Conexión y manejo robot 1
-        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot1",
-                       table="robot1", redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = "robot1"
+            # Conexión y manejo robot 2
+            df2 = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot2",
+                            table="robot2", redownload=flag_download)
+            df2 = fecha_format(df2)
+            df2["robot"] = "robot2"
 
-        # Conexión y manejo robot 2
-        df2 = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot2",
-                        table="robot2", redownload=flag_download)
-        df2 = fecha_format(df2)
-        df2["robot"] = "robot2"
+            # Defining the title and filename for saving the plots
+            title = "Variables Robots de Esmaltado Día " + str(sel_dia)
 
-        # Defining the title and filename for saving the plots
-        title = "Variables Robots de Esmaltado Día " + str(sel_dia)
+            # Rename the following references in columns
+            df["referencia"].replace(dict_replace, inplace=True)
+            df2["referencia"].replace(dict_replace, inplace=True)
 
-        # Rename the following references in columns
-        df["referencia"].replace(dict_replace, inplace=True)
-        df2["referencia"].replace(dict_replace, inplace=True)
+        else:
+            # Definición del robot seleccionado
+            tabla_sql = sel_robot.lower().replace(" ", "")
+            # Empty second DF
+            df2 = None
 
-    else:
-        # Definición del robot seleccionado
-        tabla_sql = sel_robot.lower().replace(" ", "")
+            # Conexión y manejo robot 1
+            df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database=tabla_sql,
+                           table=tabla_sql, redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = tabla_sql
+
+            # Defining the title and filename for saving the plots
+            title = "Variables " + tabla_sql + " de Esmaltado Día " + str(sel_dia)
+
+            # Rename the following references in columns
+            df["referencia"].replace(dict_replace, inplace=True)
+
+    elif sel_celula == 'Célula 1':
         # Empty second DF
         df2 = None
 
-        # Conexión y manejo robot 1
-        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database=tabla_sql,
-                       table=tabla_sql, redownload=flag_download)
+        # Conexión y manejo celula 1
+        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database='Celula1GR',
+                       table='Celula1GR', redownload=flag_download)
         df = fecha_format(df)
-        df["robot"] = tabla_sql
+
+        df["robot"] = 'robot1'
 
         # Defining the title and filename for saving the plots
-        title = "Variables " + tabla_sql + " de Esmaltado Día " + str(sel_dia)
-
-        # Rename the following references in columns
-        df["referencia"].replace(dict_replace, inplace=True)
+        title = "Variables Celula 1 de Esmaltado Día " + str(sel_dia)
 
     # Salud de los datos
     salud_datos = (df.shape[0] / segundos_dias) * 100
     salud_list = [np.round(salud_datos, 2)]
 
-
-
     return df, df2, salud_list, salud_datos, title
 
 
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
-def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2022-01-02", flag_download=False):
+def get_data_range(sel_celula, sel_robot, sel_dia_ini, sel_dia_fin, flag_download=False):
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     del periodo de fecha ingresado
     INPUT:
+        sel_celula = ['Célula 4', 'Célula 1']
         sel_robot = ["robot1", "robot2", "Ambos"]
         sel_dia_ini = Día inicial en STR ("2022-01-01")
         sel_dia_fin = Día final en STR ("2022-01-02")
@@ -173,36 +188,57 @@ def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2
     # Definición del rango de fecha seleccionado
     segundos_dias = 86400
 
-    # Por rango
-    if sel_robot == "Ambos":
-        # Conexión y manejo robot 1
-        df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot1",
-                       table="robot1", redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = "robot1"
+    # Por Robot
+    if sel_celula == 'Célula 4':
+        # Saving the salud datos of the period
+        title_salud = "Salud_Cel4_" + str(sel_dia_ini) + "_y_" + str(sel_dia_fin)
 
-        # Conexión y manejo robot 2
-        df2 = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot2",
-                        table="robot2", redownload=flag_download)
-        df2 = fecha_format(df2)
-        df2["robot"] = "robot2"
+        # Por rango
+        if sel_robot == "Ambos":
+            # Conexión y manejo robot 1
+            df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot1",
+                           table="robot1", redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = "robot1"
+
+            # Conexión y manejo robot 2
+            df2 = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database="robot2",
+                            table="robot2", redownload=flag_download)
+            df2 = fecha_format(df2)
+            df2["robot"] = "robot2"
+
+            # Defining the title and filename for saving the plots
+            title = "Variables Robots de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
+        else:
+            # Definición del robot seleccionado
+            tabla_sql = sel_robot.lower().replace(" ", "")
+            # Empty second DF
+            df2 = None
+
+            # Conexión y manejo robot 1 o robot 2
+            df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database='Celula1GR',
+                           table='Celula1GR', redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = 'robot1'
+
+            # Defining the title and filename for saving the plots
+            title = "Variables_Celula_1 de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
+
+    elif sel_celula == 'Célula 1':
+        # Saving the salud datos of the period
+        title_salud = "Salud_Cel1_" + str(sel_dia_ini) + "_y_" + str(sel_dia_fin)
+
+        # Conexión y manejo Celula 1
+        df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database='Celula1GR',
+                       table='Celula1GR', redownload=flag_download)
+        df = fecha_format(df)
+        df["robot"] = 'Cel_1_R1'
 
         # Defining the title and filename for saving the plots
-        title = "Variables Robots de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
-    else:
-        # Definición del robot seleccionado
-        tabla_sql = sel_robot.lower().replace(" ", "")
+        title = "Variables Celula 1 de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
+
         # Empty second DF
         df2 = None
-
-        # Conexión y manejo robot 1 o robot 2
-        df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database=tabla_sql,
-                       table=tabla_sql, redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = tabla_sql
-
-        # Defining the title and filename for saving the plots
-        title = "Variables " + tabla_sql + " de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
 
     # Salud de cada día en el periodo
     salud_list = []
@@ -217,8 +253,7 @@ def get_data_range(sel_robot="Robot 1", sel_dia_ini="2022-01-01", sel_dia_fin="2
         sel_dia_ini_aux = sel_dia_ini_aux + datetime.timedelta(days=1)
     salud_datos = sum(salud_list) / len(salud_list)
 
-    # Saving the salud datos of the period
-    title_salud = "Salud_" + str(sel_dia_ini) + "_y_" + str(sel_dia_fin)
+
     with open('./Data/Analizadas/' + title_salud + '.txt', 'w') as f:
         f.write('%.2f' % salud_datos)
 
@@ -348,34 +383,51 @@ def sql_connect(tipo, day, database, table):  # hour=6
     return pd_sql
 
 
-def sql_plot_live(time=60, day="2021-04-28"):
+def sql_plot_live(sel_celula, time, day):
     """
     Función que se conecta a la base de dato y crea el archivo de visualización a la vez que lo guarda
     INPUT:
+        sel_celula = Célula a la que nos conectaremos (base de datos)
         time = tiempo a visualizar
-        day = Día inicial EN STR
+        day = Día inicial EN STR ("2021-04-28")
     OUTPUT:
         df = pandas dataframe traido de la base de dato 1 del SQL
         df2 = pandas dataframe traido de la base de datos 2 del SQL
         fig = objeto figura para dibujarlo externamente de la función
     """
-    # Conexión y manejo robot 1
-    df = sql_connect_live(time=time, day=day, database="robot1", table="robot1")
-    df = fecha_format(df)
-    df["robot"] = "robot1"
+    if sel_celula == 'Célula 4':
+        # Conexión y manejo robot 1
+        df = sql_connect_live(time=time, day=day, database="robot1", table="robot1")
+        df = fecha_format(df)
+        df["robot"] = "robot1"
 
-    # Conexión y manejo robot 2
-    df2 = sql_connect_live(time=time + 20, day=day, database="robot2", table="robot2")
-    df2 = fecha_format(df2)
-    df2["robot"] = "robot2"
+        # Conexión y manejo robot 2
+        df2 = sql_connect_live(time=time + 20, day=day, database="robot2", table="robot2")
+        df2 = fecha_format(df2)
+        df2["robot"] = "robot2"
 
-    df2 = df2.loc[df.index[0]:df.index[-1], :]
+        df2 = df2.loc[df.index[0]:df.index[-1], :]
 
-    # Defining the title and filename for saving the plots
-    title = "Variables Robots de Esmaltado Día " + day
+        # Defining the title and filename for saving the plots
+        title = "Variables Robots de Esmaltado Día " + day + ' ' + sel_celula
 
-    # Plotting the DF
-    fig = plot_html_all(df, df2, title)
+        # Plotting the DF
+        fig = plot_html_all(df, df2, title)
+
+    elif sel_celula == 'Célula 1':
+        # Conexión y manejo robot 1
+        df = sql_connect_live(time=time, day=day, database="Celula1GR", table="Celula1GR")
+        df = fecha_format(df)
+        df["robot"] = "robot1"
+
+        # Empty dataframe
+        df2 = None
+
+        # Defining the title and filename for saving the plots
+        title = "Variables Robots de Esmaltado Día " + day + ' ' + sel_celula
+
+        # Plotting the DF
+        fig = plot_html(df, title)
 
     return df, df2, fig
 
