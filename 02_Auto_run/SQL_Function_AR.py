@@ -8,8 +8,9 @@ import os
 
 import numpy as np
 import pandas as pd
-import pyodbc
-
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.engine import URL
 # ----------------------------------------------------------------------------------------------------------------------
 # Function definition
 def load_data(folder="./Data/Raw/", filename="tabla_robot1_2021_04_22_1012.csv"):
@@ -73,10 +74,11 @@ def add_day(day, add=1):
     return str(ini_date), str(fin_date)
 
 
-def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False):
+def get_data_day(sel_celula, sel_robot,  sel_dia, flag_download=False):
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     INPUT:
+        Sel_celula = ['Célula 4', 'Célula 1']
         sel_robot = ["robot1", "robot2", "Ambos"]
         sel_dia = Día inicial EN STR
         redownload = Debe descargarse la data o buscar dentro de los archivos previamente descargados
@@ -90,37 +92,62 @@ def get_data_day(sel_robot="Robot 1", sel_dia="2022-01-01", flag_download=False)
     # Definición del rango de fecha seleccionado
     segundos_dias = 86400
 
-    # Por día
-    if sel_robot == "Ambos":
-        # Conexión y manejo robot 1
-        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot1",
-                       table="robot1", redownload=flag_download)
-        df = fecha_format(df)
-        df["robot"] = "robot1"
+    # Por Robot
+    if sel_celula == 'Célula 4':
+        # Adjust in the reference name
+        dict_replace = {37: 9147, 38: 9311, 39: 9312}
+        # Por día
+        if sel_robot == "Ambos":
+            # Conexión y manejo robot 1
+            df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot1",
+                           table="robot1", redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = "robot1"
 
-        # Conexión y manejo robot 2
-        df2 = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot2",
-                        table="robot2", redownload=flag_download)
-        df2 = fecha_format(df2)
-        df2["robot"] = "robot2"
+            # Conexión y manejo robot 2
+            df2 = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database="robot2",
+                            table="robot2", redownload=flag_download)
+            df2 = fecha_format(df2)
+            df2["robot"] = "robot2"
 
-        # Defining the title and filename for saving the plots
-        title = "Variables Robots de Esmaltado Día " + str(sel_dia)
+            # Defining the title and filename for saving the plots
+            title = "Variables Robots de Esmaltado Día " + str(sel_dia)
 
-    else:
-        # Definición del robot seleccionado
-        tabla_sql = sel_robot.lower().replace(" ", "")
+            # Rename the following references in columns
+            df["referencia"].replace(dict_replace, inplace=True)
+            df2["referencia"].replace(dict_replace, inplace=True)
+
+        else:
+            # Definición del robot seleccionado
+            tabla_sql = sel_robot.lower().replace(" ", "")
+            # Empty second DF
+            df2 = None
+
+            # Conexión y manejo robot 1
+            df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database=tabla_sql,
+                           table=tabla_sql, redownload=flag_download)
+            df = fecha_format(df)
+            df["robot"] = tabla_sql
+
+            # Defining the title and filename for saving the plots
+            title = "Variables " + tabla_sql + " de Esmaltado Día " + str(sel_dia)
+
+            # Rename the following references in columns
+            df["referencia"].replace(dict_replace, inplace=True)
+
+    elif sel_celula == 'Célula 1':
         # Empty second DF
         df2 = None
 
-        # Conexión y manejo robot 1
-        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database=tabla_sql,
-                       table=tabla_sql, redownload=flag_download)
+        # Conexión y manejo celula 1
+        df = find_load(tipo="day_planta", day=str(sel_dia), ini=None, database='Celula1GR',
+                       table='Celula1GR', redownload=flag_download)
         df = fecha_format(df)
-        df["robot"] = tabla_sql
+
+        df["robot"] = 'robot1'
 
         # Defining the title and filename for saving the plots
-        title = "Variables " + tabla_sql + " de Esmaltado Día " + str(sel_dia)
+        title = "Variables Celula 1 de Esmaltado Día " + str(sel_dia)
 
     # Salud de los datos
     salud_datos = (df.shape[0] / segundos_dias) * 100
@@ -160,11 +187,38 @@ def find_load(tipo, day, ini, database, table, redownload):
         else:
             pd_sql = sql_connect(tipo=tipo, day=day, database=database, table=table)
 
+    elif tipo == "rango_planta":
+        # Fecha Inicial
+        l_ini_n = [int(x) for x in ini.split("-")]
+        ini_date = datetime.date(l_ini_n[0], l_ini_n[1], l_ini_n[2])
+        # Fecha Final
+        l_day_n = [int(x) for x in day.split("-")]
+        day_date = datetime.date(l_day_n[0], l_day_n[1], l_day_n[2])
+
+        # Recorro los días de ese periodo de tiempo
+        while ini_date <= day_date:
+            # Setting the folder where to search
+            directory = './Data/Raw/' + str(ini_date)[:-3] + '/'
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            filenames = os.listdir(directory)
+
+            # Creo el nombre del archivo a buscar
+            filename = 'tabla_' + table + '_' + str(ini_date) + '.csv'
+            if filename in filenames and redownload is False:
+                aux = load_data(folder=directory, filename=filename)
+            else:
+                aux = sql_connect(tipo="day_planta", day=str(ini_date), database=database, table=table)
+
+            pd_sql = pd.concat([pd_sql, aux])
+            # Avanzo un día
+            ini_date = ini_date + datetime.timedelta(days=1)
+
     return pd_sql
 
 
-def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot1',
-                table="robot1", username='IOTVARPROC', password='10Tv4rPr0C2021*'):  # hour=6
+# No poner cache en esta función para poder cargar los ultimos datos del día
+def sql_connect(tipo, day, database, table):  # hour=6
     """
     Programa que permite conectar con una base de dato del servidor y devuelve la base de dato como un pandas dataframe
     INPUT:
@@ -175,9 +229,18 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
     OUTPUT:
         pd_sql = pandas dataframe traído de la base de dato SQL
     """
+    # Connection keys
+    load_dotenv('./.env')
+
+    server = os.environ.get("SERVER")
+    username = os.environ.get("USER_SQL")
+    password = os.environ.get("PASSWORD")
+
     # Connecting to the sql database
-    conn = pyodbc.connect(
-        'driver={SQL Server};server=%s;database=%s;uid=%s;pwd=%s' % (server, database, username, password))
+    connection_str = "DRIVER={SQL Server};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s" % (server, database, username, password)
+    connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_str})
+
+    conn = create_engine(connection_url)
     # ------------------------------------------------------------------------------------------------------------------
     # Tipos de conexiones establecidas para traer distintas cantidades de datos
     # ------------------------------------------------------------------------------------------------------------------
@@ -213,5 +276,3 @@ def sql_connect(tipo="day", day="2021-04-28", server='EASAB101', database='robot
             pd_sql.to_csv('./Data/Raw/' + folder + '/tabla_' + table + '_' + day + '.csv', index=False)
 
     return pd_sql
-
-

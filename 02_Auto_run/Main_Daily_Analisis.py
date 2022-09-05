@@ -15,13 +15,21 @@ flag_download = True
 
 # ----------------------------------------------------------------------------------------------------------------------
 # Getting the data
-print("Se descargara el día {}".format(ayer))
-df, df2, salud_list, salud_datos, title = get_data_day(robots, ayer, flag_download)
+print("Se descargara el día {} de la célula 4".format(ayer))
+df, df2, salud_list, salud_datos, title = get_data_day('Célula 4', robots, ayer, flag_download)
 text_dia = str(ayer)
 
-# ----------------------------------------------------------------------------------------------------------------------
 # Analysing the data
-print("Se analizara el día {}".format(ayer))
+print("Se analizara el día {} de la célula 4".format(ayer))
 Analisis_df1 = find_analisis(df=df, robot="robot1", text_dia=text_dia, redownload=flag_download)
 Analisis_df2 = find_analisis(df=df2, robot="robot2", text_dia=text_dia, redownload=flag_download)
+
+# ----------------------------------------------------------------------------------------------------------------------
+print("Se descargara el día {} de la célula 1".format(ayer))
+df, df2, salud_list, salud_datos, title = get_data_day('Célula 1', None, ayer, flag_download)
+text_dia = str(ayer)
+
+# Analysing the data
+print("Se analizara el día {} de la célula 1".format(ayer))
+# Analisis_df1 = find_analisis(df=df, robot="robot1", text_dia=text_dia, redownload=flag_download)
 # Analisis_df = pd.concat([Analisis_df1, Analisis_df2])
