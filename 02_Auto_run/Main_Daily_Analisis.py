@@ -22,7 +22,7 @@ text_dia = str(ayer)
 # Analysing the data
 print("Se analizara el día {} de la célula 4".format(ayer))
 Analisis_df1 = find_analisis(df=df, sel_celula='Célula 4', robot="robot1", text_dia=text_dia, redownload=flag_download)
-Analisis_df2 = find_analisis(df=df2,sel_celula='Célula 4', robot="robot2", text_dia=text_dia, redownload=flag_download)
+Analisis_df2 = find_analisis(df=df2, sel_celula='Célula 4', robot="robot2", text_dia=text_dia, redownload=flag_download)
 
 # ----------------------------------------------------------------------------------------------------------------------
 print("Se descargara el día {} de la célula 1".format(ayer))
@@ -31,5 +31,5 @@ text_dia = str(ayer)
 
 # Analysing the data
 print("Se analizara el día {} de la célula 1".format(ayer))
-Analisis_df1 = find_analisis(df=df, sel_celula='Célula 1', robot="robot1", text_dia=text_dia, redownload=flag_download)
+Analisis_df1 = find_analisis(df=df, sel_celula='Célula 1', robot="Celula1", text_dia=text_dia, redownload=flag_download)
 # Analisis_df = pd.concat([Analisis_df1, Analisis_df2])
