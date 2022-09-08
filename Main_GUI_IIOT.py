@@ -390,16 +390,19 @@ elif page == "Día a Día":
             # Ejecuto la función que analiza el DF descargado
             if sel_celula == 'Célula 4':
                 if sel_robot == "Ambos":
-                    Analisis_df1 = find_analisis(df=df, robot="robot1", text_dia=text_dia, redownload=flag_download)
-                    Analisis_df2 = find_analisis(df=df2, robot="robot2", text_dia=text_dia, redownload=flag_download)
+                    Analisis_df1 = find_analisis(df=df, sel_celula=sel_celula,
+                                                 robot="robot1", text_dia=text_dia, redownload=flag_download)
+                    Analisis_df2 = find_analisis(df=df2, sel_celula=sel_celula,
+                                                 robot="robot2", text_dia=text_dia, redownload=flag_download)
                     Analisis_df_raw = pd.concat([Analisis_df1, Analisis_df2])
                 else:
                     # Definición del robot seleccionado
-                    Analisis_df_raw = find_analisis(df=df, robot=sel_robot.lower().replace(" ", ""), text_dia=text_dia,
+                    Analisis_df_raw = find_analisis(df=df, sel_celula=sel_celula,
+                                                    robot=sel_robot.lower().replace(" ", ""), text_dia=text_dia,
                                                     redownload=flag_download)
             elif sel_celula == 'Célula 1':
-                #TODO: Crear nueva funcion de analisis para la celula 1
-                Analisis_df_raw = find_analisis(df=df, robot="Celula1", text_dia=text_dia, redownload=flag_download)
+                Analisis_df_raw = find_analisis(df=df, sel_celula=sel_celula,
+                                                robot="Celula1", text_dia=text_dia, redownload=flag_download)
 
             # Visualizando la tabla
             visual_tabla_dinam(Analisis_df_raw, "analisis_table")
@@ -844,8 +847,10 @@ elif page == "Online":
             # Analisis for Celula 4
             if sel_celula_online == 'Célula 4':
                 start_time = time.time()
-                Analisis_r1 = find_analisis(df=live_pd_r1, robot="robot1", text_dia="En Vivo", redownload=True)
-                Analisis_r2 = find_analisis(df=live_pd_r2, robot="robot2", text_dia="En Vivo", redownload=True)
+                Analisis_r1 = find_analisis(df=live_pd_r1, sel_celula=sel_celula_online,
+                                            robot="robot1", text_dia="En Vivo", redownload=True)
+                Analisis_r2 = find_analisis(df=live_pd_r2, sel_celula=sel_celula_online,
+                                            robot="robot2", text_dia="En Vivo", redownload=True)
                 # Analisis_live = pd.concat([Analisis_r1, Analisis_r2])
                 print("---Analisis %s seconds ---" % (time.time() - start_time))
 
@@ -864,8 +869,18 @@ elif page == "Online":
 
             # Steps for Celula 1
             elif sel_celula_online == 'Célula 1':
-                pass
-                #TODO: Analisis celula 1 online
+                start_time = time.time()
+                Analisis_r1 = find_analisis(df=live_pd_r1, sel_celula=sel_celula_online,
+                                            robot="Celula1", text_dia='En Vivo', redownload=True)
+                print("---Analisis %s seconds ---" % (time.time() - start_time))
+
+                # Visualizando la tabla
+                # Robot 1
+                text1_holder.markdown("**Información Robot 1**")
+                with r1_holder:
+                    visual_tabla_dinam(Analisis_r1, "r1" + str(cont))
+                # Aumento contador para variar el key de la visualización
+                cont += 1
 
             # Wait x seconds before updating
             time.sleep(30)
