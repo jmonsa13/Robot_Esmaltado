@@ -74,9 +74,9 @@ def visual_tabla_dinam(df, key, flag_fecha=1):
     gb.configure_grid_options(domLayout='normal')
     gridoptions = gb.build()
 
-    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True,  height=400, width='50%', defaultWidth=3,
+    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True, height=400, width='50%', defaultWidth=3,
            theme="balham",  # "light", "dark", "blue", "material" # defaultWidth=3, fit_columns_on_grid_load=False,
-           key=key, reload_data=True,  gridOptions=gridoptions,
+           key=key, reload_data=True, gridOptions=gridoptions,
            enable_enterprise_modules=True)
     return
 
@@ -164,9 +164,18 @@ def analisis_variable(df, idx_variable, variable, flag_var, tiempo_var, total_va
         # Existen datos, cambio aux a 1
         aux = 1
 
-        # Acumulo la data del proceso
-        tiempo_var += 1
-        total_var += df.iloc[idx_variable][variable]
+        # Diferencia en el tiempo
+        if idx_variable > 0:
+            diferencia_dato = df.index[idx_variable] - df.index[idx_variable - 1]
+
+            # Acumulo la data del proceso
+            tiempo_var += diferencia_dato.total_seconds()
+            total_var += ((df.iloc[idx_variable][variable] + df.iloc[idx_variable - 1][variable]) / 2) \
+                         * diferencia_dato.total_seconds()
+        else:
+            # Acumulo la data del proceso
+            tiempo_var += 1
+            total_var += df.iloc[idx_variable][variable]
 
         # Maximo de la variable
         if max_var < df.iloc[idx_variable][variable]:
@@ -289,7 +298,19 @@ def analitica_esmalte(df, table, periodo):
             # Recorro el proceso mientras el estado sea activo
             while df.iloc[idx]['estado'] == 1:
                 # Cuento el tiempo que estado permanecio on
-                tiempo_estado += 1
+                # Diferencia en el tiempo
+                if idx > 0:
+                    # Acumulo la data del proceso
+                    diferencia_tiempo = df.index[idx] - df.index[idx - 1]
+                    tiempo_estado += diferencia_tiempo.total_seconds()
+
+                    total_pred += ((df.iloc[idx]["presion_red"] + df.iloc[idx - 1]["presion_red"]) / 2) \
+                                 * diferencia_tiempo.total_seconds()
+                else:
+                    # Acumulo la data del proceso
+                    tiempo_estado += 1
+
+                    total_pred += df.iloc[idx]["presion_red"]
                 # --------------------------------------------------------------------------------------------
                 # Calcular LA PRESION DE RED
                 if max_pred < df.iloc[idx]["presion_red"]:
@@ -297,8 +318,6 @@ def analitica_esmalte(df, table, periodo):
 
                 if min_pred > df.iloc[idx]["presion_red"]:
                     min_pred = df.iloc[idx]["presion_red"]
-
-                total_pred += df.iloc[idx]["presion_red"]
                 # --------------------------------------------------------------------------------------------
                 idx_var = idx
                 while total_flag is True:
@@ -438,15 +457,25 @@ def analitica_esmalte(df, table, periodo):
 
     return analisis_df
 
-#TODO: Eliminar esta función, cuando se corrija lo del 0 en el flujo masico de la celula 1
+
+# TODO: Eliminar esta función, cuando se corrija lo del 0 en el flujo masico de la celula 1
 def analisis_variable_masico_cel1(df, idx_variable, variable, flag_var, tiempo_var, total_var, max_var, aux):
     if df.iloc[idx_variable][variable] > 2 and flag_var is True:
         # Existen datos, cambio aux a 1
         aux = 1
 
-        # Acumulo la data del proceso
-        tiempo_var += 1
-        total_var += df.iloc[idx_variable][variable]
+        # Diferencia en el tiempo
+        if idx_variable > 0:
+            diferencia_dato = df.index[idx_variable] - df.index[idx_variable - 1]
+
+            # Acumulo la data del proceso
+            tiempo_var += diferencia_dato.total_seconds()
+            total_var += ((df.iloc[idx_variable][variable] + df.iloc[idx_variable - 1][variable]) / 2) \
+                         * diferencia_dato.total_seconds()
+        else:
+            # Acumulo la data del proceso
+            tiempo_var += 1
+            total_var += df.iloc[idx_variable][variable]
 
         # Maximo de la variable
         if max_var < df.iloc[idx_variable][variable]:
@@ -466,7 +495,7 @@ def analisis_variable_masico_cel1(df, idx_variable, variable, flag_var, tiempo_v
     return tiempo_var, total_var, max_var, flag_var, aux
 
 
-#TODO: Eliminar esta función, cuando se corrija lo del 0 en el flujo masico de la celula 1
+# TODO: Eliminar esta función, cuando se corrija lo del 0 en el flujo masico de la celula 1
 @st.experimental_memo(suppress_st_warning=True, show_spinner=True)
 def analitica_esmalte_test(df, table, periodo):
     """
@@ -571,7 +600,19 @@ def analitica_esmalte_test(df, table, periodo):
             # Recorro el proceso mientras el estado sea activo
             while df.iloc[idx]['estado'] == 1:
                 # Cuento el tiempo que estado permanece on
-                tiempo_estado += 1
+                # Diferencia en el tiempo
+                if idx > 0:
+                    # Acumulo la data del proceso
+                    diferencia_tiempo = df.index[idx] - df.index[idx - 1]
+                    tiempo_estado += diferencia_tiempo.total_seconds()
+
+                    total_pred += ((df.iloc[idx]["presion_red"] + df.iloc[idx - 1]["presion_red"]) / 2) \
+                                 * diferencia_tiempo.total_seconds()
+                else:
+                    # Acumulo la data del proceso
+                    tiempo_estado += 1
+
+                    total_pred += df.iloc[idx]["presion_red"]
                 # --------------------------------------------------------------------------------------------
                 # Calcular LA PRESION DE RED
                 if max_pred < df.iloc[idx]["presion_red"]:
@@ -579,8 +620,6 @@ def analitica_esmalte_test(df, table, periodo):
 
                 if min_pred > df.iloc[idx]["presion_red"]:
                     min_pred = df.iloc[idx]["presion_red"]
-
-                total_pred += df.iloc[idx]["presion_red"]
                 # --------------------------------------------------------------------------------------------
                 idx_var = idx
                 while total_flag is True:
