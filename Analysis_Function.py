@@ -287,7 +287,8 @@ def analitica_esmalte(df, table, periodo):
             # Guardo el dia, la hora y el turno
             ndia = df.iloc[idx]["ndia"]
             hora = df.index[idx].time()
-            turno = np.floor((df.index[idx] - datetime.timedelta(hours=6)).time().hour / 8) + 1
+            turno = np.floor(((df.index[idx] + datetime.timedelta(minutes=30))
+                              - datetime.timedelta(hours=6)).time().hour / 8) + 1
 
             # Inicializar Presion de referencia minima
             min_pred = df.iloc[idx]["presion_red"]
@@ -589,7 +590,8 @@ def analitica_esmalte_test(df, table, periodo):
             # Guardo el dia, la hora y el turno
             ndia = df.iloc[idx]["ndia"]
             hora = df.index[idx].time()
-            turno = np.floor((df.index[idx] - datetime.timedelta(hours=6)).time().hour / 8) + 1
+            turno = np.floor(((df.index[idx] + datetime.timedelta(minutes=30))
+                              - datetime.timedelta(hours=6)).time().hour / 8) + 1
 
             # Inicializar Presion de referencia minima
             min_pred = df.iloc[idx]["presion_red"]

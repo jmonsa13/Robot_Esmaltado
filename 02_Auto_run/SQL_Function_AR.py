@@ -257,12 +257,19 @@ def sql_connect(tipo, day, database, table):  # hour=6
 
     elif tipo == "day_planta":
         ini, fin = add_day(day)
+        pd_sql_0 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + ini + "'"
+                                     + " AND hora like 5 AND minuto between 30 and 59", conn)
+
         pd_sql_1 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + ini + "'"
                                      + " AND hora between 6 and 23", conn)
 
         pd_sql_2 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + fin + "'"
-                                     + " AND hora between 0 and 5", conn)
-        pd_sql = pd.concat([pd_sql_1, pd_sql_2])
+                                     + " AND hora between 0 and 4", conn)
+
+        pd_sql_3 = pd.read_sql_query("SELECT * FROM " + database + ".dbo." + table + " WHERE fecha like '" + fin + "'"
+                                     + " AND hora like 5 AND minuto between 0 and 29", conn)
+
+        pd_sql = pd.concat([pd_sql_0, pd_sql_1, pd_sql_2, pd_sql_3])
 
         # Guardando los datos en archivos estaticos
         if day == str(datetime.date.today()):
