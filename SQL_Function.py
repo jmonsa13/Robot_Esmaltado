@@ -46,8 +46,16 @@ def fecha_format(df):
     df["ndia"] = df["fecha"].dt.day_name()
 
     # Creo columna de fecha organizacional
-    df["fecha_planta"] = [elem - datetime.timedelta(days=1) if df["hora"].iloc[x] < 6 else elem for x, elem in
-                          enumerate(df["fecha"])]
+    auxiliar = []
+    for x, elem in enumerate(df["fecha"]):
+        if df["hora"].iloc[x] < 5:
+            auxiliar.append(elem - datetime.timedelta(days=1))
+        elif df["hora"].iloc[x] == 5 and df["minuto"].iloc[x] < 30:
+            auxiliar.append(elem - datetime.timedelta(days=1))
+        else:
+            auxiliar.append(elem)
+
+    df["fecha_planta"] = auxiliar
 
     # Drop the columns peso_antes y peso_despues if exist. These values will come from a different table
     df = df.drop(['peso_antes', 'peso_despues'], axis=1, errors="ignore")
