@@ -52,29 +52,36 @@ def visual_tabla_dinam(df, key, flag_fecha=1):
         key: Llave distinta para el objeto de streamlit
 
     """
+    # Copy dataframe
+    df_aux = df.copy()
+
     # Definiendo la tabla de visualización
-    gb = GridOptionsBuilder.from_dataframe(df)
+    gb = GridOptionsBuilder.from_dataframe(df_aux)
     gb.configure_side_bar()
 
     if flag_fecha == 1:
+        df_aux['Fecha'] = pd.to_datetime(df_aux['Fecha'], format='%Y-%m-%d', exact=False)
+        df_aux['Fecha_planta'] = pd.to_datetime(df_aux['Fecha_planta'], format='%Y-%m-%d', exact=False)
         gb.configure_column("Fecha", type=["dateColumnFilter", "customDateTimeFormat"],
                             custom_format_string='yyyy-MM-dd', pivot=True)
         gb.configure_column("Fecha_planta", type=["dateColumnFilter", "customDateTimeFormat"],
                             custom_format_string='yyyy-MM-dd', pivot=True)
     elif flag_fecha == 0:
+        df_aux['Fecha_planta'] = pd.to_datetime(df_aux['Fecha_planta'], format='%Y-%m-%d', exact=False)
         gb.configure_column("Fecha_planta", type=["dateColumnFilter", "customDateTimeFormat"],
                             custom_format_string='yyyy-MM-dd', pivot=True)
     elif flag_fecha == 2:
         gb.configure_column("Fecha_AñoMes_planta", type=["dateColumnFilter", "customDateTimeFormat"],
                             custom_format_string='yyyy-MM', pivot=True)
     elif flag_fecha == 3:
+        df_aux['Fecha'] = pd.to_datetime(df_aux['Fecha'], format='%Y-%m-%d', exact=False)
         gb.configure_column("Fecha", type=["dateColumnFilter", "customDateTimeFormat"],
                             custom_format_string='yyyy-MM-dd', pivot=True)
 
     gb.configure_grid_options(domLayout='normal')
     gridoptions = gb.build()
 
-    AgGrid(df, editable=False, sortable=True, filter=True, resizable=True, height=400, width='50%', defaultWidth=3,
+    AgGrid(df_aux, editable=False, sortable=True, filter=True, resizable=True, height=400, width='50%', defaultWidth=3,
            theme="balham",  # "light", "dark", "blue", "material" # defaultWidth=3, fit_columns_on_grid_load=False,
            key=key, reload_data=True, gridOptions=gridoptions,
            enable_enterprise_modules=True)
