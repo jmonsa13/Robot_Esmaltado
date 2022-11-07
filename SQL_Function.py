@@ -224,13 +224,13 @@ def get_data_range(sel_celula, sel_robot, sel_dia_ini, sel_dia_fin, flag_downloa
             df2 = None
 
             # Conexión y manejo robot 1 o robot 2
-            df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database='Celula1GR',
-                           table='Celula1GR', redownload=flag_download)
+            df = find_load(tipo="rango_planta", ini=str(sel_dia_ini), day=str(sel_dia_fin), database=tabla_sql,
+                           table=tabla_sql, redownload=flag_download)
             df = fecha_format(df)
-            df["robot"] = 'robot1'
+            df["robot"] = tabla_sql
 
             # Defining the title and filename for saving the plots
-            title = "Variables_Celula_1 de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
+            title = "Variables " + tabla_sql + " de Esmaltado entre " + str(sel_dia_ini) + " y " + str(sel_dia_fin)
 
     elif sel_celula == 'Célula 1':
         # Saving the salud datos of the period
