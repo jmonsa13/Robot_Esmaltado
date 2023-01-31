@@ -84,7 +84,7 @@ def visual_tabla_dinam(df, key, flag_fecha=1):
     AgGrid(df_aux, editable=False, sortable=True, filter=True, resizable=True, height=400, width='50%', defaultWidth=3,
            theme="balham",  # "light", "dark", "blue", "material" # defaultWidth=3, fit_columns_on_grid_load=False,
            key=key, reload_data=True, gridOptions=gridoptions,
-           enable_enterprise_modules=True)
+           enable_enterprise_modules=False)
     return
 
 
